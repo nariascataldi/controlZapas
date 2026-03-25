@@ -78,6 +78,18 @@ function initDB() {
             FOREIGN KEY (variante_id) REFERENCES variantes(id)
         )`);
 
+        // Tabla Imágenes de Producto (Galería)
+        db.run(`CREATE TABLE IF NOT EXISTS producto_imagenes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            producto_id INTEGER NOT NULL,
+            nombre_archivo TEXT NOT NULL,
+            ruta TEXT NOT NULL,
+            es_principal INTEGER DEFAULT 0,
+            orden INTEGER DEFAULT 0,
+            fecha_subida DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+        )`);
+
         console.log('Tablas inicializadas correctamente.');
         
         // Crear el administrador por defecto si no existe

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const dotenv = require('dotenv');
 
 // Configuración de variables de entorno
@@ -11,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Archivo de base de datos
 const db = require('./database');
@@ -25,6 +27,7 @@ app.use('/api/auth', require('./routes/auth').router);
 app.use('/api/productos', require('./routes/productos'));
 app.use('/api/ventas', require('./routes/ventas'));
 app.use('/api/usuarios', require('./routes/usuarios'));
+app.use('/api/productos', require('./routes/imagenes'));
 
 // Iniciar servidor
 app.listen(PORT, () => {
