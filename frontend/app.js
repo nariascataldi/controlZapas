@@ -24,13 +24,13 @@ async function fetchAPI(endpoint, options = {}) {
             ...options,
             headers: { ...defaultHeaders, ...options.headers }
         });
-        
+
         if (response.status === 401 || response.status === 403) {
             alert('Sesión expirada o acceso denegado.');
             logout();
             return null;
         }
-        
+
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Error en la petición');
         return data;
@@ -64,8 +64,8 @@ function configurarNavBar() {
     const user = getUser();
     const navLinks = document.getElementById('navLinks');
     const navBrand = document.getElementById('navBrand');
-    
-    if(!navLinks) return;
+
+    if (!navLinks) return;
 
     navLinks.innerHTML = `
         ${user.rol === 'ADMIN' ? `<li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>` : ''}
@@ -78,7 +78,7 @@ function configurarNavBar() {
         </li>
     `;
 
-    if(navBrand && user.rol === 'ADMIN') {
+    if (navBrand && user.rol === 'ADMIN') {
         navBrand.innerHTML += ` <span class="badge bg-secondary ms-2 small">Admin</span>`;
     }
 }
@@ -94,7 +94,7 @@ if (window.location.pathname.endsWith('login.html')) {
             const u = document.getElementById('inputUser').value;
             const p = document.getElementById('inputPassword').value;
             const alertBox = document.getElementById('loginAlert');
-            
+
             try {
                 const data = await fetchAPI('/auth/login', {
                     method: 'POST',
@@ -119,7 +119,7 @@ async function cargarDashboard() {
     if (!window.location.pathname.endsWith('dashboard.html')) return;
     try {
         const data = await fetchAPI('/ventas/dashboard');
-        if(data) {
+        if (data) {
             document.getElementById('widgetTotalVentas').textContent = formatCurrency(data.ventas_totales || 0);
             document.getElementById('widgetUnidades').textContent = data.unidades_vendidas || 0;
             document.getElementById('widgetStockCritico').textContent = data.stock_critico || 0;
@@ -150,7 +150,7 @@ async function cargarHistorialAdmin() {
                     </tr>
                 `;
             });
-            if(data.length === 0) {
+            if (data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Aún no hay ventas registradas</td></tr>';
             }
         }
@@ -167,17 +167,17 @@ async function cargarInventario() {
         const data = await fetchAPI('/productos');
         inventarioGlobal = data;
         renderStock();
-        
+
         // Habilitar botón de nuevo producto si es ADMIN
-        if(getUser().rol === 'ADMIN') {
+        if (getUser().rol === 'ADMIN') {
             document.getElementById('btnAdminNuevoProd').classList.remove('d-none');
         }
     } catch (e) { console.error(e); }
 }
 
 function bgAlert(stock, min) {
-    if(stock === 0) return 'bg-danger text-white';
-    if(stock <= min) return 'bg-warning text-dark';
+    if (stock === 0) return 'bg-danger text-white';
+    if (stock <= min) return 'bg-warning text-dark';
     return 'bg-success bg-opacity-10 text-success';
 }
 
@@ -191,18 +191,18 @@ function generarLinkWhatsapp(prod) {
 
 function renderStock(lista = inventarioGlobal) {
     const tbody = document.getElementById('tablaStockBody');
-    if(!tbody) return;
+    if (!tbody) return;
     tbody.innerHTML = '';
-    
+
     const userRole = getUser().rol;
 
     lista.forEach(item => {
-        const pMostrar = userRole === 'ADMIN' ? 
+        const pMostrar = userRole === 'ADMIN' ?
             `Max: ${formatCurrency(item.precio_mayorista)}<br><small class="text-muted">Min: ${formatCurrency(item.precio_minorista)}</small>` :
             `${formatCurrency(item.precio_minorista)}`;
 
         // Si no hay variante (producto sin hijos aún), omitimos pintar filas de data o la pintamos vacía
-        if(!item.sku) return; 
+        if (!item.sku) return;
 
         tbody.innerHTML += `
             <tr>
@@ -231,8 +231,8 @@ function renderStock(lista = inventarioGlobal) {
 
 function filtrarStock() {
     const text = document.getElementById('busquedaStock').value.toLowerCase();
-    const filtrado = inventarioGlobal.filter(i => 
-        (i.nombre && i.nombre.toLowerCase().includes(text)) || 
+    const filtrado = inventarioGlobal.filter(i =>
+        (i.nombre && i.nombre.toLowerCase().includes(text)) ||
         (i.sku && i.sku.toLowerCase().includes(text)) ||
         (i.talla && i.talla.toString().includes(text))
     );
@@ -247,11 +247,11 @@ function agregarVarianteTemporal() {
     const st = parseInt(document.getElementById('varStock').value);
     const m = parseInt(document.getElementById('varMin').value);
 
-    if(!s || !t || isNaN(st)) return alert('Llena SKU, Talla y Stock');
+    if (!s || !t || isNaN(st)) return alert('Llena SKU, Talla y Stock');
 
-    variantesTemporales.push({sku:s, color:c, talla:t, stock_actual:st, stock_minimo:m||0});
+    variantesTemporales.push({ sku: s, color: c, talla: t, stock_actual: st, stock_minimo: m || 0 });
     renderVariantesTemp();
-    
+
     // reset mini form
     document.getElementById('varSku').value = '';
     document.getElementById('varTalla').value = '';
@@ -272,7 +272,7 @@ const formNuevoP = document.getElementById('formNuevoProducto');
 let imagenesTemporales = []; // Files pendientes de subir
 
 if (formNuevoP) {
-    formNuevoP.addEventListener('submit', async(e) => {
+    formNuevoP.addEventListener('submit', async (e) => {
         e.preventDefault();
         const payload = {
             nombre: document.getElementById('prodNombre').value,
@@ -295,7 +295,7 @@ if (formNuevoP) {
             const modalEl = document.getElementById('modalNuevoProd');
             const modal = bootstrap.Modal.getInstance(modalEl);
             modal.hide();
-            
+
             formNuevoP.reset();
             variantesTemporales = [];
             imagenesTemporales = [];
@@ -313,7 +313,7 @@ function handleDrop(event) {
     const dropZone = document.getElementById('dropZone');
     dropZone.style.borderColor = 'rgba(171,173,174,0.3)';
     dropZone.style.background = 'var(--bg-surface-container-low, #eff1f2)';
-    
+
     const files = event.dataTransfer.files;
     if (files.length > 0) previsualizarImagenes(files);
 }
@@ -365,7 +365,7 @@ function renderGaleriaPreviewLocal() {
     const container = document.getElementById('galeriaPreview');
     if (!container) return;
     container.innerHTML = '';
-    
+
     imagenesTemporales.forEach((file, idx) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -415,7 +415,7 @@ async function subirImagenesAlProducto(productoId) {
 
 async function promptAjustarStock(varId, stockActual) {
     const nuevoStock = prompt('Ingresa la nueva cantidad en inventario:', stockActual);
-    if(nuevoStock !== null && !isNaN(nuevoStock)) {
+    if (nuevoStock !== null && !isNaN(nuevoStock)) {
         try {
             await fetchAPI(`/productos/variantes/${varId}/stock`, { method: 'PUT', body: JSON.stringify({ stock_actual: parseInt(nuevoStock) }) });
             cargarInventario(); // refetch
@@ -433,13 +433,13 @@ async function buscarPos(fueEnter = false) {
     const inputEl = document.getElementById('posBuscador');
     const query = inputEl.value.trim();
     const container = document.getElementById('posResultados');
-    
+
     try {
         const res = await fetchAPI(`/productos/buscar?q=${encodeURIComponent(query)}`);
         buscarPosResults = res;
-        
+
         container.innerHTML = '';
-        if(res.length === 0) {
+        if (res.length === 0) {
             container.innerHTML = '<div class="col-12 text-center text-muted"><p>No se encontraron productos.</p></div>';
             return;
         }
@@ -455,7 +455,7 @@ async function buscarPos(fueEnter = false) {
                 // Flash verde en el scanner
                 const scannerEl = document.querySelector('.scanner-input');
                 if (scannerEl) { scannerEl.classList.add('scanner-flash'); setTimeout(() => scannerEl.classList.remove('scanner-flash'), 500); }
-                return buscarPos(false); 
+                return buscarPos(false);
             } else if (res.length === 1 && res[0].stock_actual > 0) {
                 agregarAlCarrito(res[0]);
                 inputEl.value = '';
@@ -469,12 +469,12 @@ async function buscarPos(fueEnter = false) {
 
         res.forEach(item => {
             const disable = item.stock_actual <= 0;
-            const precioRef = userRole==='ADMIN' ? item.precio_mayorista : item.precio_minorista;
+            const precioRef = userRole === 'ADMIN' ? item.precio_mayorista : item.precio_minorista;
             const itemJson = JSON.stringify(item).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-            
+
             container.innerHTML += `
                 <div class="col-12 col-md-6">
-                    <div class="product-card-pos d-flex align-items-center gap-3 ${disable ? 'opacity-50':''}" 
+                    <div class="product-card-pos d-flex align-items-center gap-3 ${disable ? 'opacity-50' : ''}" 
                          ${disable ? '' : `onclick="agregarAlCarrito(JSON.parse(this.dataset.item))" data-item="${itemJson}"`}>
                         <div class="product-thumb">
                             <i class="bi bi-box-seam"></i>
@@ -482,7 +482,7 @@ async function buscarPos(fueEnter = false) {
                         <div class="flex-grow-1 min-w-0">
                             <div class="fw-bold text-truncate color-dark" style="font-size:0.9rem;" title="${item.nombre}">${item.nombre}</div>
                             <div class="d-flex gap-1 mt-1 flex-wrap">
-                                <span class="badge" style="background:#eff1f2; color:#595c5d; font-weight:500;">${item.color||'-'}</span>
+                                <span class="badge" style="background:#eff1f2; color:#595c5d; font-weight:500;">${item.color || '-'}</span>
                                 <span class="badge" style="background:#eff1f2; color:#595c5d; font-weight:500;">Talla ${item.talla}</span>
                                 <span class="badge" style="background:rgba(0,73,230,0.08); color:#0049e6; font-weight:500;">${item.stock_actual} ud</span>
                             </div>
@@ -499,7 +499,7 @@ async function buscarPos(fueEnter = false) {
         // Cargar imágenes de productos en los thumbnails
         cargarThumbsProductos(res);
 
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
 }
 
 // Cargar imágenes de productos (lazy)
@@ -517,12 +517,12 @@ async function cargarThumbsProductos(items) {
                         const cardItem = JSON.parse(card.dataset.item || '{}');
                         if (cardItem.producto_id === pid) {
                             const thumb = card.querySelector('.product-thumb');
-                            if (thumb) thumb.innerHTML = `<img src="${API_URL.replace('/api','')}${principal.ruta}" alt="thumb">`;
+                            if (thumb) thumb.innerHTML = `<img src="${API_URL.replace('/api', '')}${principal.ruta}" alt="thumb">`;
                         }
-                    } catch(e) {}
+                    } catch (e) { }
                 });
             }
-        } catch(e) {}
+        } catch (e) { }
     }
 }
 
@@ -530,7 +530,7 @@ function agregarAlCarrito(prod) {
     // Verificar si ya existe en el carrito
     const existe = carritoPos.find(i => i.variante_id === prod.variante_id);
     if (existe) {
-        if(existe.cantidad < prod.stock_actual) {
+        if (existe.cantidad < prod.stock_actual) {
             existe.cantidad++;
         } else {
             alert('No hay más stock disponible para este producto.');
@@ -553,15 +553,15 @@ function agregarAlCarrito(prod) {
 
 function actualizarCarrito() {
     const container = document.getElementById('cartItems');
-    if(!container) return;
-    
+    if (!container) return;
+
     // Identificar tipo de precio seleccionado
     const pRadio = document.querySelector('input[name="tipoPrecio"]:checked');
     const tipoPrecio = pRadio ? pRadio.value : 'minorista'; // fallback
 
     let subtotal = 0;
     container.innerHTML = '';
-    
+
     carritoPos.forEach((item, idx) => {
         const precioListado = tipoPrecio === 'minorista' ? item.precio_minorista : item.precio_mayorista;
         const totalFila = precioListado * item.cantidad;
@@ -591,7 +591,7 @@ function actualizarCarrito() {
         `;
     });
 
-    if(carritoPos.length === 0) {
+    if (carritoPos.length === 0) {
         container.innerHTML = `
             <div class="text-center py-4 text-muted small">
                 <i class="bi bi-cart-x d-block mb-2" style="font-size:1.8rem; opacity:0.3;"></i>
@@ -605,17 +605,17 @@ function actualizarCarrito() {
     // Cálculo de descuentos
     const inputDescPorcentaje = document.getElementById('descPromedio');
     const inputDescFijo = document.getElementById('descFijo');
-    
+
     let descPct = (inputDescPorcentaje && parseFloat(inputDescPorcentaje.value)) || 0;
     let descFijo = (inputDescFijo && parseFloat(inputDescFijo.value)) || 0;
 
     let totalDescuentoCalculado = (subtotal * (descPct / 100)) + descFijo;
-    
+
     // Evitar descuentos mayores al subtotal
-    if(totalDescuentoCalculado > subtotal) {
+    if (totalDescuentoCalculado > subtotal) {
         totalDescuentoCalculado = subtotal;
     }
-    
+
     let totalFinal = subtotal - totalDescuentoCalculado;
 
     document.getElementById('cartCount').textContent = `${carritoPos.length} items`;
@@ -644,11 +644,11 @@ async function cargarThumbsCarrito() {
                 const thumbs = document.querySelectorAll('.cart-thumb');
                 carritoPos.forEach((item, idx) => {
                     if (item.producto_id === pid && thumbs[idx]) {
-                        thumbs[idx].innerHTML = `<img src="${API_URL.replace('/api','')}${principal.ruta}" alt="thumb" style="width:100%;height:100%;object-fit:cover;">`;
+                        thumbs[idx].innerHTML = `<img src="${API_URL.replace('/api', '')}${principal.ruta}" alt="thumb" style="width:100%;height:100%;object-fit:cover;">`;
                     }
                 });
             }
-        } catch(e) {}
+        } catch (e) { }
     }
 }
 
@@ -669,15 +669,15 @@ function quitarCart(idx) {
 }
 
 const formCheckout = document.getElementById('formCheckout');
-if(formCheckout) {
+if (formCheckout) {
     formCheckout.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        if(carritoPos.length === 0) return alert('El carrito está vacío');
+
+        if (carritoPos.length === 0) return alert('El carrito está vacío');
 
         const cliente = document.getElementById('clientNombre').value;
         const tel = document.getElementById('clientTel').value;
-        
+
         const pRadio = document.querySelector('input[name="tipoPrecio"]:checked');
         const tipoPrecio = pRadio ? pRadio.value : 'minorista';
 
@@ -699,7 +699,7 @@ if(formCheckout) {
         let descFijo = (inputDescFijo && parseFloat(inputDescFijo.value)) || 0;
 
         let totalDescuentoCalculado = (totalSubtotalBruto * (descPct / 100)) + descFijo;
-        if(totalDescuentoCalculado > totalSubtotalBruto) totalDescuentoCalculado = totalSubtotalBruto;
+        if (totalDescuentoCalculado > totalSubtotalBruto) totalDescuentoCalculado = totalSubtotalBruto;
         let totalCostoFinal = totalSubtotalBruto - totalDescuentoCalculado;
 
         // Modificamos el payload. Ojo: La comisión en backend se debería calcular sobre el total final o subtotal.
@@ -713,7 +713,7 @@ if(formCheckout) {
 
         try {
             await fetchAPI('/ventas', { method: 'POST', body: JSON.stringify(payload) });
-            
+
             // Mostrar modal success
             const modalEl = document.getElementById('modalVentaOk');
             const modal = new bootstrap.Modal(modalEl);
@@ -736,15 +736,257 @@ function nuevaVentaPOS() {
     carritoPos = [];
     document.getElementById('clientNombre').value = '';
     document.getElementById('clientTel').value = '';
-    if(document.getElementById('descPromedio')) document.getElementById('descPromedio').value = '';
-    if(document.getElementById('descFijo')) document.getElementById('descFijo').value = '';
-    
+    if (document.getElementById('descPromedio')) document.getElementById('descPromedio').value = '';
+    if (document.getElementById('descFijo')) document.getElementById('descFijo').value = '';
+
     actualizarCarrito();
-    
+
     // refetch stock
     buscarPos();
-    
+
     const modalEl = document.getElementById('modalVentaOk');
     const modal = bootstrap.Modal.getInstance(modalEl);
-    if(modal) modal.hide();
+    if (modal) modal.hide();
 }
+
+// 5. DASHBOARD Y ESTADÍSTICAS (ADMIN)
+async function cargarDashboard() {
+    if (!window.location.pathname.endsWith('dashboard.html')) return;
+    try {
+        const kpis = await fetchAPI('/stats/kpis');
+        const elTotalVentas = document.getElementById('widgetTotalVentas');
+        const elGanancias = document.getElementById('widgetGanancias');
+        const elComisiones = document.getElementById('widgetComisiones');
+
+        if (elTotalVentas) elTotalVentas.textContent = formatCurrency(kpis.ventas_totales_mes);
+        if (elGanancias) elGanancias.textContent = formatCurrency(kpis.ganancias_netas_mes);
+        if (elComisiones) elComisiones.textContent = formatCurrency(kpis.comisiones_por_pagar);
+    } catch (error) {
+        console.error('Error cargando KPIs:', error);
+    }
+}
+
+async function cargarHistorialAdmin() {
+    if (!window.location.pathname.endsWith('dashboard.html')) return;
+    // Carga paralela de ambos historiales
+    Promise.all([
+        cargarHistorialVendedores(),
+        cargarHistorialClientes(),
+        cargarTopProductos()
+    ]).catch(e => console.error("Error en historiales:", e));
+}
+
+async function cargarHistorialVendedores() {
+    const tbody = document.getElementById('historialVendedoresBody');
+    if (!tbody) return;
+
+    const vendedores = await fetchAPI('/stats/rendimiento-vendedores');
+    tbody.innerHTML = '';
+
+    if (vendedores.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Aún no hay ventas registradas por vendedores.</td></tr>';
+        return;
+    }
+
+    vendedores.forEach(v => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-bottom border-light align-middle'; // Estética premium (Soft line)
+        tr.innerHTML = `
+            <td class="py-3">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-secondary bg-opacity-10 text-secondary me-3 d-flex justify-content-center align-items-center" style="width:36px; height:36px">
+                        <i class="bi bi-person-badge fs-6"></i>
+                    </div>
+                    <span class="fw-semibold color-dark">${v.nombre}</span>
+                </div>
+            </td>
+            <td class="py-3"><span class="badge border border-secondary text-secondary bg-transparent">${v.porcentaje_comision}%</span></td>
+            <td class="py-3 text-muted">${v.cantidad_ventas}</td>
+            <td class="py-3 fw-bold color-dark">${formatCurrency(v.total_vendido)}</td>
+            <td class="py-3 text-danger fw-semibold">${formatCurrency(v.total_comisiones)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function cargarHistorialClientes() {
+    const tbody = document.getElementById('historialClientesBody');
+    if (!tbody) return;
+
+    const clientes = await fetchAPI('/stats/historial-clientes');
+    tbody.innerHTML = '';
+
+    if (clientes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Aún no hay clientes registrados.</td></tr>';
+        return;
+    }
+
+    // Mostramos solo los top 4 clientes
+    clientes.slice(0, 4).forEach(c => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-bottom border-light align-middle';
+        const dateStr = c.ultima_compra ? new Date(c.ultima_compra).toLocaleDateString() : '-';
+        tr.innerHTML = `
+            <td class="py-3">
+                <span class="fw-semibold color-dark d-block">${c.nombre}</span>
+                <small class="text-muted" style="font-size:0.75rem">${c.contacto || 'Sin contacto'}</small>
+            </td>
+            <td class="py-3 text-muted">${c.cantidad_compras}</td>
+            <td class="py-3 color-primary fw-semibold">${formatCurrency(c.total_gastado)}</td>
+            <td class="py-3 text-muted small">${dateStr}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function cargarTopProductos() {
+    const tbody = document.getElementById('topProductosBody');
+    if (!tbody) return;
+
+    const top = await fetchAPI('/stats/top-productos');
+    tbody.innerHTML = '';
+
+    if (top.length === 0) {
+        tbody.innerHTML = '<div class="text-center text-muted p-3">Aún no hay productos vendidos.</div>';
+        return;
+    }
+
+    top.forEach((p, idx) => {
+        const item = document.createElement('div');
+        item.className = 'd-flex justify-content-between align-items-center border-bottom border-light py-2';
+        item.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="badge rounded-circle bg-dark me-3" style="width:24px; height:24px; display:flex; align-items:center; justify-content:center;">${idx + 1}</div>
+                <div>
+                    <span class="fw-medium color-dark d-block" style="font-size:0.9rem">${p.nombre}</span>
+                    <small class="text-muted" style="font-size:0.75rem">${p.marca}</small>
+                </div>
+            </div>
+            <div class="text-end">
+                <span class="fw-bold color-dark d-block" style="font-size:0.9rem">${p.unidades_vendidas} unds</span>
+                <small class="text-success" style="font-size:0.75rem">+${formatCurrency(p.ingresos_generados)}</small>
+            </div>
+        `;
+        tbody.appendChild(item);
+    })
+}
+
+// 6. GESTIÓN DE PERSONAL (ADMIN)
+async function cargarListaUsuarios() {
+    if (!window.location.pathname.endsWith('vendedores.html')) return;
+    const tbody = document.getElementById('listaUsuariosBody');
+    if (!tbody) return;
+
+    try {
+        const usuarios = await fetchAPI('/usuarios');
+        tbody.innerHTML = '';
+        if (usuarios.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No existen usuarios aún.</td></tr>';
+            return;
+        }
+
+        usuarios.forEach(u => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-bottom border-light align-middle';
+            const badgeRol = u.rol === 'ADMIN' ? '<span class="badge bg-dark rounded-pill ms-2" style="font-size:0.65rem">ADMIN</span>' : '';
+
+            tr.innerHTML = `
+                <td class="py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-light text-secondary me-3 d-flex justify-content-center align-items-center" style="width:36px; height:36px">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <span class="fw-semibold color-dark">${u.nombre}</span>
+                    </div>
+                </td>
+                <td class="py-3">
+                    ${u.rol === 'ADMIN' ? '<span class="badge rounded-pill bg-dark">ADMIN</span>' : '<span class="badge border border-secondary text-secondary rounded-pill bg-transparent">VENDEDOR</span>'}
+                </td>
+                <td class="py-3 fw-medium ${u.rol === 'ADMIN' ? 'text-muted' : 'text-success'}">
+                    ${u.rol === 'ADMIN' ? '-' : u.porcentaje_comision + '%'}
+                </td>
+                <td class="py-3 text-end">
+                    <button class="btn btn-sm btn-light border rounded-circle shadow-sm me-1" style="width:32px; height:32px; padding:0;" onclick="editarUsuario(${u.id}, '${u.nombre}', '${u.rol}', ${u.porcentaje_comision})" title="Editar">
+                        <i class="bi bi-pencil-square text-secondary"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light border rounded-circle shadow-sm" style="width:32px; height:32px; padding:0;" onclick="eliminarUsuario(${u.id})" title="Eliminar">
+                        <i class="bi bi-trash-fill text-danger"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) {
+        console.error('Error cargando usuarios:', e);
+    }
+}
+
+// Configurar formulario de usuarios
+const formUsuario = document.getElementById('formUsuario');
+if (formUsuario) {
+    formUsuario.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('userId').value;
+        const nombre = document.getElementById('userNombre').value.trim();
+        const password = document.getElementById('userPassword').value;
+        const rol = document.getElementById('userRol').value;
+        const pComision = parseFloat(document.getElementById('userComision').value) || 0;
+
+        const url = id ? `/usuarios/${id}` : '/usuarios';
+        const method = id ? 'PUT' : 'POST';
+
+        if (!id && !password) return alert('La contraseña es obligatoria para un nuevo usuario.');
+
+        const payload = { nombre, rol, porcentaje_comision: pComision };
+        if (password) payload.password = password;
+
+        try {
+            await fetchAPI(url, { method, body: JSON.stringify(payload) });
+            const modalEl = document.getElementById('modalUsuario');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            cargarListaUsuarios();
+        } catch (error) {
+            alert('Error al guardar usuario: ' + error.message);
+        }
+    });
+
+    // Limpiar form al abrir modal nuevo
+    document.getElementById('modalUsuario').addEventListener('show.bs.modal', function (event) {
+        if (!event.relatedTarget || !event.relatedTarget.closest('.btn-light')) {
+            // Es editar, no limpiar
+        } else {
+            // Nuevo usuario
+            document.getElementById('userId').value = '';
+            document.getElementById('formUsuario').reset();
+            document.getElementById('modalUsuarioLabel').textContent = 'Nuevo Integrante de Staff';
+            document.getElementById('userPasswordHelp').textContent = 'Requerida al crear un nuevo usuario.';
+        }
+    });
+}
+
+function editarUsuario(id, nombre, rol, comision) {
+    document.getElementById('userId').value = id;
+    document.getElementById('userNombre').value = nombre;
+    document.getElementById('userPassword').value = '';
+    document.getElementById('userRol').value = rol;
+    document.getElementById('userComision').value = comision;
+
+    document.getElementById('modalUsuarioLabel').textContent = 'Editar Integrante';
+    document.getElementById('userPasswordHelp').textContent = 'Dejar vacío si no se desea cambiar.';
+
+    const modal = new bootstrap.Modal(document.getElementById('modalUsuario'));
+    modal.show();
+}
+
+async function eliminarUsuario(id) {
+    if (confirm('¿Estás seguro de eliminar este usuario del staff?')) {
+        try {
+            await fetchAPI(`/usuarios/${id}`, { method: 'DELETE' });
+            cargarListaUsuarios();
+        } catch (e) {
+            alert('Error eliminando usuario: ' + e.message);
+        }
+    }
+}
+
