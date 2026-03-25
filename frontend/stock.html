@@ -134,6 +134,28 @@
                             </table>
                         </div>
 
+                        <!-- Galería de Imágenes (Laced Precision) -->
+                        <h6 class="fw-bold mb-3 pb-2" style="border-bottom: 1px solid rgba(171,173,174,0.15);">
+                            <i class="bi bi-images me-2"></i>Galería de Imágenes
+                        </h6>
+                        <div id="dropZone" class="text-center p-4 rounded-3 mb-3"
+                             style="background: var(--bg-surface-container-low, #eff1f2); 
+                                    border: 2px dashed rgba(171,173,174,0.3);
+                                    cursor: pointer; transition: all 0.3s ease;"
+                             ondragover="event.preventDefault(); this.style.borderColor='#0049e6'; this.style.background='rgba(0,73,230,0.05)';"
+                             ondragleave="this.style.borderColor='rgba(171,173,174,0.3)'; this.style.background='var(--bg-surface-container-low, #eff1f2)';"
+                             ondrop="handleDrop(event)"
+                             onclick="document.getElementById('inputImagenes').click()">
+                            <i class="bi bi-cloud-arrow-up fs-1 text-muted d-block mb-2" style="opacity:0.5;"></i>
+                            <span class="text-muted small">Arrastra imágenes aquí o <span class="text-primary fw-medium">haz clic para seleccionar</span></span>
+                            <div class="text-muted mt-1" style="font-size:0.7rem;">JPEG, PNG, WebP · Máx 5MB cada una</div>
+                        </div>
+                        <input type="file" id="inputImagenes" class="d-none" accept="image/jpeg,image/png,image/webp,image/gif" multiple onchange="previsualizarImagenes(this.files)">
+                        
+                        <div id="galeriaPreview" class="d-flex flex-wrap gap-2 mb-4">
+                            <!-- Thumbnails se insertan por JS -->
+                        </div>
+
                         <div class="text-end">
                             <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" class="btn btn-primary rounded-3 btn-premium ms-2">Guardar Producto</button>

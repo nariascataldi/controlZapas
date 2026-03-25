@@ -269,6 +269,8 @@ function renderVariantesTemp() {
 }
 
 const formNuevoP = document.getElementById('formNuevoProducto');
+let imagenesTemporales = []; // Files pendientes de subir
+
 if (formNuevoP) {
     formNuevoP.addEventListener('submit', async(e) => {
         e.preventDefault();
@@ -282,20 +284,133 @@ if (formNuevoP) {
         };
 
         try {
-            await fetchAPI('/productos', { method: 'POST', body: JSON.stringify(payload) });
+            const producto = await fetchAPI('/productos', { method: 'POST', body: JSON.stringify(payload) });
+
+            // Si hay imágenes pendientes, subirlas al producto recién creado
+            if (imagenesTemporales.length > 0 && producto && producto.id) {
+                await subirImagenesAlProducto(producto.id);
+            }
+
             alert('Producto Guardado!');
-            // Cerrar modal sucio pero efectivo sin jQuery:
             const modalEl = document.getElementById('modalNuevoProd');
             const modal = bootstrap.Modal.getInstance(modalEl);
             modal.hide();
             
-            // Recargar e inicializar
             formNuevoP.reset();
-            variantesTemporales=[];
+            variantesTemporales = [];
+            imagenesTemporales = [];
             renderVariantesTemp();
+            limpiarGaleriaPreview();
             cargarInventario();
         } catch (e) { alert('Error: ' + e.message); }
     });
+}
+
+// --- GALERÍA DE IMÁGENES ---
+
+function handleDrop(event) {
+    event.preventDefault();
+    const dropZone = document.getElementById('dropZone');
+    dropZone.style.borderColor = 'rgba(171,173,174,0.3)';
+    dropZone.style.background = 'var(--bg-surface-container-low, #eff1f2)';
+    
+    const files = event.dataTransfer.files;
+    if (files.length > 0) previsualizarImagenes(files);
+}
+
+function previsualizarImagenes(files) {
+    const container = document.getElementById('galeriaPreview');
+    if (!container) return;
+
+    Array.from(files).forEach((file, idx) => {
+        if (!file.type.startsWith('image/')) return;
+        if (file.size > 5 * 1024 * 1024) {
+            alert(`"${file.name}" excede el límite de 5MB.`);
+            return;
+        }
+
+        imagenesTemporales.push(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const index = imagenesTemporales.length - 1;
+            const thumb = document.createElement('div');
+            thumb.className = 'position-relative';
+            thumb.style.cssText = 'width:100px; height:100px; border-radius:8px; overflow:hidden; transition:transform 0.2s;';
+            thumb.id = `thumb-${index}`;
+            thumb.innerHTML = `
+                <img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">
+                <button type="button" class="btn btn-sm position-absolute top-0 end-0 m-1 p-0 d-flex align-items-center justify-content-center"
+                        style="width:22px; height:22px; background:rgba(180,19,64,0.85); border-radius:50%; border:none;"
+                        onclick="quitarImagenTemporal(${index})"
+                        title="Quitar">
+                    <i class="bi bi-x text-white" style="font-size:14px;"></i>
+                </button>
+                ${index === 0 ? '<span class="position-absolute bottom-0 start-0 badge bg-primary m-1" style="font-size:0.6rem;">Principal</span>' : ''}
+            `;
+            container.appendChild(thumb);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Limpiar el input
+    document.getElementById('inputImagenes').value = '';
+}
+
+function quitarImagenTemporal(index) {
+    imagenesTemporales.splice(index, 1);
+    renderGaleriaPreviewLocal();
+}
+
+function renderGaleriaPreviewLocal() {
+    const container = document.getElementById('galeriaPreview');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    imagenesTemporales.forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const thumb = document.createElement('div');
+            thumb.className = 'position-relative';
+            thumb.style.cssText = 'width:100px; height:100px; border-radius:8px; overflow:hidden;';
+            thumb.innerHTML = `
+                <img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">
+                <button type="button" class="btn btn-sm position-absolute top-0 end-0 m-1 p-0 d-flex align-items-center justify-content-center"
+                        style="width:22px; height:22px; background:rgba(180,19,64,0.85); border-radius:50%; border:none;"
+                        onclick="quitarImagenTemporal(${idx})" title="Quitar">
+                    <i class="bi bi-x text-white" style="font-size:14px;"></i>
+                </button>
+                ${idx === 0 ? '<span class="position-absolute bottom-0 start-0 badge bg-primary m-1" style="font-size:0.6rem;">Principal</span>' : ''}
+            `;
+            container.appendChild(thumb);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function limpiarGaleriaPreview() {
+    const container = document.getElementById('galeriaPreview');
+    if (container) container.innerHTML = '';
+    imagenesTemporales = [];
+}
+
+async function subirImagenesAlProducto(productoId) {
+    const formData = new FormData();
+    imagenesTemporales.forEach(file => formData.append('imagenes', file));
+
+    const token = getToken();
+    try {
+        const response = await fetch(`${API_URL}/productos/${productoId}/imagenes`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Error subiendo imágenes');
+        console.log(`${data.imagenes.length} imagen(es) subida(s) al producto ${productoId}`);
+    } catch (err) {
+        console.error('Error subiendo imágenes:', err);
+        alert('El producto se guardó, pero hubo un error subiendo las imágenes: ' + err.message);
+    }
 }
 
 async function promptAjustarStock(varId, stockActual) {
