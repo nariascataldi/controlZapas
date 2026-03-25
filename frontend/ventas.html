@@ -8,6 +8,45 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* === POS-Specific Overrides (Laced Precision) === */
+        .pill-switch { display: inline-flex; background: #eff1f2; border-radius: 999px; padding: 3px; gap: 2px; }
+        .pill-switch .pill-option { padding: 6px 16px; border-radius: 999px; border: none; background: transparent; font-size: 0.8rem; font-weight: 500; color: #595c5d; cursor: pointer; transition: all 0.25s ease; }
+        .pill-switch .pill-option.active { background: #fff; color: #0049e6; box-shadow: 0 2px 8px rgba(0,73,230,0.12); }
+        
+        .product-card-pos { background: #fff; border-radius: 12px; padding: 12px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: none; }
+        .product-card-pos:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(12,15,16,0.08); }
+        
+        .product-thumb { width: 56px; height: 56px; border-radius: 10px; background: #eff1f2; object-fit: cover; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #abadae; font-size: 1.2rem; overflow: hidden; }
+        .product-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .cart-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(171,173,174,0.1); }
+        .cart-item:last-child { border-bottom: none; }
+        .cart-thumb { width: 48px; height: 48px; border-radius: 8px; background: #eff1f2; object-fit: cover; flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #abadae; }
+        .cart-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .qty-controls { display: inline-flex; align-items: center; gap: 8px; }
+        .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: none; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+        .qty-btn.minus { background: #eff1f2; color: #595c5d; }
+        .qty-btn.minus:hover { background: #e0e3e4; }
+        .qty-btn.plus { background: rgba(0,73,230,0.1); color: #0049e6; }
+        .qty-btn.plus:hover { background: rgba(0,73,230,0.2); }
+        
+        .scanner-input { position: relative; }
+        .scanner-input .scanner-pulse { animation: pulseScanner 2s ease-in-out infinite; }
+        @keyframes pulseScanner { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+        .scanner-flash { animation: flashGreen 0.4s ease; }
+        @keyframes flashGreen { 0% { box-shadow: 0 0 0 0 rgba(25,135,84,0.5); } 100% { box-shadow: 0 0 0 12px rgba(25,135,84,0); } }
+        
+        .discount-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+        .discount-chip.percent { background: rgba(0,73,230,0.08); color: #0049e6; }
+        .discount-chip.fixed { background: rgba(25,135,84,0.08); color: #198754; }
+        
+        .checkout-total { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #0049e6, #829bff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        
+        .btn-confirm-sale { background: linear-gradient(135deg, #0049e6, #829bff); border: none; font-size: 1.1rem; transition: all 0.3s; }
+        .btn-confirm-sale:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,73,230,0.3); }
+    </style>
 </head>
 <body class="bg-light pb-5">
 
@@ -31,16 +70,30 @@
     <div class="container py-2">
         <div class="row g-4">
             
-            <!-- Buscador y Listado de Productos -->
+            <!-- Buscador y Listado de Productos (60%) -->
             <div class="col-12 col-lg-7">
-                <div class="card card-hover-kinetic mb-4 h-100">
+                <div class="card card-hover-kinetic mb-4 h-100" style="border:none;">
+                    <!-- Scanner Bar Premium -->
                     <div class="card-header bg-transparent border-bottom-0 pt-4 pb-2 px-4">
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-light border-0 text-muted" title="Buscador y Escáner activo"><i class="bi bi-upc-scan"></i></span>
-                            <input type="text" class="form-control bg-light border-0 fw-medium" id="posBuscador" placeholder="Escanear código o buscar modelo..." autocomplete="off">
-                            <button class="btn btn-primary btn-premium" onclick="buscarPos()"><i class="bi bi-arrow-right"></i></button>
+                        <div class="scanner-input">
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-0 text-primary scanner-pulse" title="Escáner activo">
+                                    <i class="bi bi-upc-scan fs-5"></i>
+                                </span>
+                                <input type="text" class="form-control bg-light border-0 fw-medium" id="posBuscador" 
+                                       placeholder="Escanear código o buscar modelo..." autocomplete="off"
+                                       style="font-size:1rem;">
+                                <button class="btn btn-primary btn-premium px-4" onclick="buscarPos()">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="text-muted small" id="posResultCount">Buscá un producto para comenzar</span>
                         </div>
                     </div>
+                    
+                    <!-- Product Results Grid -->
                     <div class="card-body p-4 pt-2">
                         <div class="row g-3" id="posResultados">
                             <div class="col-12 text-center text-muted py-5">
@@ -52,88 +105,99 @@
                 </div>
             </div>
 
-            <!-- Carrito y Check Out -->
+            <!-- Carrito y Check Out (40%) -->
             <div class="col-12 col-lg-5">
-                <div class="card card-hover-kinetic sticky-top" style="top: 20px;">
+                <div class="card card-hover-kinetic sticky-top" style="top: 20px; border:none;">
+                    <!-- Cart Header -->
                     <div class="card-header bg-gradient-primary text-white py-3 px-4 rounded-top-4 d-flex justify-content-between align-items-center border-0">
                         <h5 class="mb-0 fw-bold"><i class="bi bi-cart3 me-2"></i>Nueva Venta</h5>
                         <span class="badge bg-white color-primary rounded-pill mb-0 px-3 py-2" id="cartCount">0 items</span>
                     </div>
+                    
+                    <!-- Cart Items (Visual) -->
                     <div class="card-body p-0">
-                        <div class="table-responsive" style="max-height: 350px;">
-                            <table class="table align-middle mb-0 custom-table pos-table">
-                                <tbody id="cartItems">
-                                    <tr><td colspan="4" class="text-center py-4 text-muted small">El carrito está vacío</td></tr>
-                                </tbody>
-                            </table>
+                        <div style="max-height: 300px; overflow-y: auto;" id="cartItemsContainer">
+                            <div id="cartItems">
+                                <div class="text-center py-4 text-muted small">
+                                    <i class="bi bi-cart-x d-block mb-2" style="font-size:1.8rem; opacity:0.3;"></i>
+                                    El carrito está vacío
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="card-footer bg-white border-top p-4 rounded-bottom-4">
+                    <!-- Checkout Section -->
+                    <div class="card-footer bg-white border-top-0 p-4 rounded-bottom-4" style="border-top: 1px solid rgba(171,173,174,0.1) !important;">
                         <form id="formCheckout">
                             <!-- Datos del Cliente -->
-                            <h6 class="fw-bold mb-3 color-dark">Datos del Cliente</h6>
-                            <div class="row g-2 mb-4">
+                            <h6 class="fw-bold mb-3 color-dark small text-uppercase" style="letter-spacing:0.05em;">
+                                <i class="bi bi-person-fill me-1 text-primary"></i> Datos del Cliente
+                            </h6>
+                            <div class="row g-2 mb-3">
                                 <div class="col-7">
-                                    <input type="text" class="form-control bg-light border-0" id="clientNombre" placeholder="Nombre completo" required>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-light border-0 text-muted"><i class="bi bi-person"></i></span>
+                                        <input type="text" class="form-control bg-light border-0" id="clientNombre" placeholder="Nombre completo" required>
+                                    </div>
                                 </div>
                                 <div class="col-5">
-                                    <input type="text" class="form-control bg-light border-0" id="clientTel" placeholder="📞 WhatsApp" required>
-                                </div>
-                            </div>
-
-                            <!-- Selector de tipo de precio si es admin, o mostrar solo un tipo -->
-                            <div class="d-flex justify-content-between align-items-center mb-3 text-muted small">
-                                <span>Lista de precios:</span>
-                                <div>
-                                    <div class="form-check form-check-inline">
-                                      <input class="form-check-input" type="radio" name="tipoPrecio" id="precioMin" value="minorista" checked onchange="actualizarCarrito()">
-                                      <label class="form-check-label" for="precioMin">Minorista</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                      <input class="form-check-input" type="radio" name="tipoPrecio" id="precioMay" value="mayorista" onchange="actualizarCarrito()">
-                                      <label class="form-check-label" for="precioMay">Mayorista</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-light border-0 text-muted"><i class="bi bi-whatsapp"></i></span>
+                                        <input type="text" class="form-control bg-light border-0" id="clientTel" placeholder="WhatsApp" required>
                                     </div>
                                 </div>
                             </div>
 
-                            <hr class="text-muted opacity-25">
+                            <!-- Precio Toggle (Pill Switches) -->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-muted small fw-medium">Lista de precios</span>
+                                <div class="pill-switch">
+                                    <button type="button" class="pill-option active" data-tipo="minorista" onclick="cambiarTipoPrecio(this)">Minorista</button>
+                                    <button type="button" class="pill-option" data-tipo="mayorista" onclick="cambiarTipoPrecio(this)">Mayorista</button>
+                                </div>
+                            </div>
 
-                            <!-- Descuentos -->
-                            <h6 class="fw-bold mb-2 color-dark small">Descuentos</h6>
-                            <div class="row g-2 mb-3">
+                            <!-- Descuentos con Chips -->
+                            <h6 class="fw-bold mb-2 color-dark small text-uppercase" style="letter-spacing:0.05em;">
+                                <i class="bi bi-tag-fill me-1 text-primary"></i> Descuentos
+                            </h6>
+                            <div class="row g-2 mb-2">
                                 <div class="col-6">
                                     <div class="input-group input-group-sm">
-                                        <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-percent"></i></span>
-                                        <input type="number" class="form-control border-start-0 ps-0 text-end fw-medium" id="descPromedio" min="0" max="100" placeholder="0" oninput="actualizarCarrito()">
+                                        <span class="input-group-text bg-light border-0 text-primary fw-bold" style="font-size:0.8rem;">%</span>
+                                        <input type="number" class="form-control bg-light border-0 text-end fw-medium" id="descPromedio" min="0" max="100" placeholder="0" oninput="actualizarCarrito()">
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="input-group input-group-sm">
-                                        <span class="input-group-text bg-white text-muted border-end-0">$</span>
-                                        <input type="number" class="form-control border-start-0 ps-0 text-end fw-medium" id="descFijo" min="0" placeholder="0" oninput="actualizarCarrito()">
+                                        <span class="input-group-text bg-light border-0 text-success fw-bold" style="font-size:0.8rem;">$</span>
+                                        <input type="number" class="form-control bg-light border-0 text-end fw-medium" id="descFijo" min="0" placeholder="0" oninput="actualizarCarrito()">
                                     </div>
                                 </div>
                             </div>
-                            
-                            <hr class="text-muted opacity-25">
-
-                            <!-- Totales -->
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="text-muted small">Subtotal</span>
-                                <span class="fw-medium small" id="cartSubtotal">$0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-3 text-success">
-                                <span class="small">Descuento Total</span>
-                                <span class="fw-medium small" id="cartDescuento">-$0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-4 align-items-center">
-                                <span class="fw-bold fs-5 color-dark">Total a Cobrar</span>
-                                <span class="fw-bold fs-3 text-primary" id="cartTotal">$0.00</span>
+                            <div id="discountChips" class="mb-3">
+                                <!-- Chips dinámicos de descuento -->
                             </div>
 
-                            <button type="submit" class="btn btn-primary w-100 py-3 rounded-3 fw-bold fs-5 btn-premium shadow-sm">
-                                Confirmar Venta <i class="bi bi-check2-circle ms-2"></i>
+                            <!-- Totales (Editorial Typography) -->
+                            <div style="background: #f8f9fa; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted small">Subtotal</span>
+                                    <span class="fw-medium small" id="cartSubtotal">$0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 text-success">
+                                    <span class="small">Descuento</span>
+                                    <span class="fw-medium small" id="cartDescuento">-$0.00</span>
+                                </div>
+                                <hr class="my-2" style="border-color:rgba(171,173,174,0.15);">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold color-dark">Total a Cobrar</span>
+                                    <span class="checkout-total" id="cartTotal">$0.00</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-confirm-sale text-white w-100 py-3 rounded-3 fw-bold shadow-sm">
+                                <i class="bi bi-check2-circle me-2"></i>Confirmar Venta
                             </button>
                         </form>
                     </div>
@@ -184,6 +248,24 @@
             // Autoenfocar escáner al iniciar
             inputEscanner.focus();
         });
+
+        // Pill Switch Handler
+        function cambiarTipoPrecio(btn) {
+            document.querySelectorAll('.pill-switch .pill-option').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            // Sincronizar con el radio viejo para compatibilidad con app.js
+            const tipo = btn.dataset.tipo;
+            const radioId = tipo === 'mayorista' ? 'precioMay' : 'precioMin';
+            const radio = document.getElementById(radioId);
+            if (radio) radio.checked = true;
+            actualizarCarrito();
+        }
     </script>
+    
+    <!-- Radio buttons ocultos para compatibilidad con app.js -->
+    <div style="display:none;">
+        <input type="radio" name="tipoPrecio" id="precioMin" value="minorista" checked>
+        <input type="radio" name="tipoPrecio" id="precioMay" value="mayorista">
+    </div>
 </body>
 </html>
