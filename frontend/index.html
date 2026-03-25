@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirigiendo... | controlZapas</title>
+</head>
+<body>
+    <script>
+        const token = localStorage.getItem('cz_token');
+        if (token) {
+            const user = JSON.parse(localStorage.getItem('cz_user'));
+            if (user.rol === 'ADMIN') {
+                window.location.href = 'dashboard.html';
+            } else {
+                window.location.href = 'ventas.html';
+            }
+        } else {
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
