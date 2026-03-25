@@ -9,6 +9,8 @@
 
 ## Herramientas de Diseño
 - **Stitch (MCP)**: Utilizado para generar pantallas y prototipos de alta fidelidad directamente en Antigravity.
+- **Project ID**: `14037293779698532808`
+
 
 ## Responsabilidades
 - **Generar Diseños con Stitch**: Usar las herramientas de Stitch para crear la base visual de las pantallas antes de codificarlas.
