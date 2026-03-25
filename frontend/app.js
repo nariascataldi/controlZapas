@@ -451,40 +451,79 @@ async function buscarPos(fueEnter = false) {
             const exactaSKU = res.find(item => item.sku && item.sku.toLowerCase() === query.toLowerCase());
             if (exactaSKU && exactaSKU.stock_actual > 0) {
                 agregarAlCarrito(exactaSKU);
-                inputEl.value = ''; // Limpiamos para el siguiente escaneo
-                // Restauramos resultados completos
+                inputEl.value = '';
+                // Flash verde en el scanner
+                const scannerEl = document.querySelector('.scanner-input');
+                if (scannerEl) { scannerEl.classList.add('scanner-flash'); setTimeout(() => scannerEl.classList.remove('scanner-flash'), 500); }
                 return buscarPos(false); 
             } else if (res.length === 1 && res[0].stock_actual > 0) {
-                // Alternativamente, si la busqueda generica devuelve exactamente un resultado
                 agregarAlCarrito(res[0]);
                 inputEl.value = '';
                 return buscarPos(false);
             }
         }
 
+        // Update result count
+        const countEl = document.getElementById('posResultCount');
+        if (countEl) countEl.textContent = `${res.length} producto${res.length !== 1 ? 's' : ''} encontrado${res.length !== 1 ? 's' : ''}`;
+
         res.forEach(item => {
-            const disable = item.stock_actual <= 0 ? 'disabled' : '';
+            const disable = item.stock_actual <= 0;
             const precioRef = userRole==='ADMIN' ? item.precio_mayorista : item.precio_minorista;
+            const itemJson = JSON.stringify(item).replace(/'/g, "\\'").replace(/"/g, '&quot;');
             
             container.innerHTML += `
-                <div class="col-12 col-md-6 col-xl-4">
-                    <div class="card card-hover-kinetic align-items-center flex-row p-2 ${disable ? 'opacity-50':''}" style="cursor: pointer" 
-                         ${disable ? '' : `onclick='agregarAlCarrito(${JSON.stringify(item)})'`}>
-                        <div class="bg-light rounded-3 p-3 text-center me-3 color-primary">
-                            <i class="bi bi-box-seam fs-3"></i>
+                <div class="col-12 col-md-6">
+                    <div class="product-card-pos d-flex align-items-center gap-3 ${disable ? 'opacity-50':''}" 
+                         ${disable ? '' : `onclick="agregarAlCarrito(JSON.parse(this.dataset.item))" data-item="${itemJson}"`}>
+                        <div class="product-thumb">
+                            <i class="bi bi-box-seam"></i>
                         </div>
-                        <div>
-                            <h6 class="mb-1 fw-bold text-truncate" style="max-width: 140px;" title="${item.nombre}">${item.nombre}</h6>
-                            <div class="small">
-                                <span class="badge bg-light text-dark">${item.color||'-'} / ${item.talla}</span> 
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="fw-bold text-truncate color-dark" style="font-size:0.9rem;" title="${item.nombre}">${item.nombre}</div>
+                            <div class="d-flex gap-1 mt-1 flex-wrap">
+                                <span class="badge" style="background:#eff1f2; color:#595c5d; font-weight:500;">${item.color||'-'}</span>
+                                <span class="badge" style="background:#eff1f2; color:#595c5d; font-weight:500;">Talla ${item.talla}</span>
+                                <span class="badge" style="background:rgba(0,73,230,0.08); color:#0049e6; font-weight:500;">${item.stock_actual} ud</span>
                             </div>
-                            <div class="mt-1 fw-bold color-dark">${formatCurrency(precioRef)} ${disable ? '<span class="text-danger ms-2 small">Sin Stock</span>': ''}</div>
+                        </div>
+                        <div class="text-end" style="min-width:80px;">
+                            <div class="fw-bold color-dark" style="font-size:0.95rem;">${formatCurrency(precioRef)}</div>
+                            ${disable ? '<div class="text-danger" style="font-size:0.65rem;">Sin Stock</div>' : '<div class="text-success" style="font-size:0.65rem;">Disponible</div>'}
                         </div>
                     </div>
                 </div>
             `;
         });
+
+        // Cargar imágenes de productos en los thumbnails
+        cargarThumbsProductos(res);
+
     } catch(e) { console.error(e); }
+}
+
+// Cargar imágenes de productos (lazy)
+async function cargarThumbsProductos(items) {
+    const productIds = [...new Set(items.map(i => i.producto_id))];
+    for (const pid of productIds) {
+        try {
+            const imgs = await fetchAPI(`/productos/${pid}/imagenes`);
+            if (imgs && imgs.length > 0) {
+                const principal = imgs.find(i => i.es_principal) || imgs[0];
+                // Encontrar todos los thumbs de este producto y actualizar
+                const cards = document.querySelectorAll('.product-card-pos');
+                cards.forEach(card => {
+                    try {
+                        const cardItem = JSON.parse(card.dataset.item || '{}');
+                        if (cardItem.producto_id === pid) {
+                            const thumb = card.querySelector('.product-thumb');
+                            if (thumb) thumb.innerHTML = `<img src="${API_URL.replace('/api','')}${principal.ruta}" alt="thumb">`;
+                        }
+                    } catch(e) {}
+                });
+            }
+        } catch(e) {}
+    }
 }
 
 function agregarAlCarrito(prod) {
@@ -499,7 +538,9 @@ function agregarAlCarrito(prod) {
     } else {
         carritoPos.push({
             variante_id: prod.variante_id,
+            producto_id: prod.producto_id,
             nombre: `${prod.nombre} [${prod.talla}]`,
+            color: prod.color || '-',
             precio_mayorista: prod.precio_mayorista,
             precio_minorista: prod.precio_minorista,
             cantidad: 1,
@@ -511,47 +552,55 @@ function agregarAlCarrito(prod) {
 }
 
 function actualizarCarrito() {
-    const tbody = document.getElementById('cartItems');
-    if(!tbody) return;
+    const container = document.getElementById('cartItems');
+    if(!container) return;
     
     // Identificar tipo de precio seleccionado
     const pRadio = document.querySelector('input[name="tipoPrecio"]:checked');
     const tipoPrecio = pRadio ? pRadio.value : 'minorista'; // fallback
 
     let subtotal = 0;
-    tbody.innerHTML = '';
+    container.innerHTML = '';
     
     carritoPos.forEach((item, idx) => {
         const precioListado = tipoPrecio === 'minorista' ? item.precio_minorista : item.precio_mayorista;
         const totalFila = precioListado * item.cantidad;
         subtotal += totalFila;
 
-        tbody.innerHTML += `
-            <tr class="cart-item-row">
-                <td>
-                    <div class="fw-bold color-dark small">${item.nombre}</div>
-                    <div class="text-muted" style="font-size: 0.75rem;">${item.sku} | ${formatCurrency(precioListado)} c/u</div>
-                </td>
-                <td style="width: 110px;">
-                    <div class="input-group input-group-sm">
-                        <button class="btn btn-outline-secondary" type="button" onclick="cambiarCant(${idx}, -1)">-</button>
-                        <input type="text" class="form-control text-center px-1" value="${item.cantidad}" readonly>
-                        <button class="btn btn-outline-secondary" type="button" onclick="cambiarCant(${idx}, 1)">+</button>
-                    </div>
-                </td>
-                <td class="text-end fw-bold color-dark">
-                    ${formatCurrency(totalFila)}
-                </td>
-                <td class="text-end px-1">
-                    <button class="btn btn-sm btn-light text-danger rounded-circle" onclick="quitarCart(${idx})"><i class="bi bi-trash"></i></button>
-                </td>
-            </tr>
+        container.innerHTML += `
+            <div class="cart-item">
+                <div class="cart-thumb">
+                    <i class="bi bi-box-seam" style="font-size:0.9rem;"></i>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="fw-bold color-dark text-truncate" style="font-size:0.82rem;">${item.nombre}</div>
+                    <div class="text-muted" style="font-size:0.7rem;">${item.sku} · ${formatCurrency(precioListado)} c/u</div>
+                </div>
+                <div class="qty-controls">
+                    <button type="button" class="qty-btn minus" onclick="cambiarCant(${idx}, -1)">−</button>
+                    <span class="fw-bold" style="font-size:0.9rem; min-width:20px; text-align:center;">${item.cantidad}</span>
+                    <button type="button" class="qty-btn plus" onclick="cambiarCant(${idx}, 1)">+</button>
+                </div>
+                <div class="text-end" style="min-width:70px;">
+                    <div class="fw-bold color-dark" style="font-size:0.85rem;">${formatCurrency(totalFila)}</div>
+                </div>
+                <button type="button" class="btn btn-sm p-0 text-danger" style="opacity:0.5; font-size:0.8rem;" onclick="quitarCart(${idx})" title="Quitar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
         `;
     });
 
     if(carritoPos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted small">El carrito está vacío</td></tr>';
+        container.innerHTML = `
+            <div class="text-center py-4 text-muted small">
+                <i class="bi bi-cart-x d-block mb-2" style="font-size:1.8rem; opacity:0.3;"></i>
+                El carrito está vacío
+            </div>`;
     }
+
+    // Cargar imágenes en los items del carrito
+    cargarThumbsCarrito();
 
     // Cálculo de descuentos
     const inputDescPorcentaje = document.getElementById('descPromedio');
@@ -574,6 +623,33 @@ function actualizarCarrito() {
     const cartDescEl = document.getElementById('cartDescuento');
     if (cartDescEl) cartDescEl.textContent = `-${formatCurrency(totalDescuentoCalculado)}`;
     document.getElementById('cartTotal').textContent = formatCurrency(totalFinal);
+
+    // Render discount chips
+    const chipsContainer = document.getElementById('discountChips');
+    if (chipsContainer) {
+        chipsContainer.innerHTML = '';
+        if (descPct > 0) chipsContainer.innerHTML += `<span class="discount-chip percent"><i class="bi bi-percent"></i> ${descPct}% off</span> `;
+        if (descFijo > 0) chipsContainer.innerHTML += `<span class="discount-chip fixed"><i class="bi bi-cash"></i> $${descFijo} off</span>`;
+    }
+}
+
+// Cargar thumbs del carrito (lazy)
+async function cargarThumbsCarrito() {
+    const productIds = [...new Set(carritoPos.map(i => i.producto_id).filter(Boolean))];
+    for (const pid of productIds) {
+        try {
+            const imgs = await fetchAPI(`/productos/${pid}/imagenes`);
+            if (imgs && imgs.length > 0) {
+                const principal = imgs.find(i => i.es_principal) || imgs[0];
+                const thumbs = document.querySelectorAll('.cart-thumb');
+                carritoPos.forEach((item, idx) => {
+                    if (item.producto_id === pid && thumbs[idx]) {
+                        thumbs[idx].innerHTML = `<img src="${API_URL.replace('/api','')}${principal.ruta}" alt="thumb" style="width:100%;height:100%;object-fit:cover;">`;
+                    }
+                });
+            }
+        } catch(e) {}
+    }
 }
 
 function cambiarCant(idx, diff) {
