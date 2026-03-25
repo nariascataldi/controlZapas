@@ -1,0 +1,152 @@
+/* Variables y Paleta de Colores Exclusiva `Laced Precision` (Stitch) */
+:root {
+  --colorPrimary: #0049e6;        /* Azul vibrante principal */
+  --colorPrimaryContainer: #829bff;
+  --colorPrimaryDim: #0040cb;
+  --colorError: #b41340;          /* Alertas premium (no gritonas) */
+  
+  --colorSurface: #f5f6f7;        /* Base canvas */
+  --colorSurfaceLow: #eff1f2;     /* Bloques secundarios */
+  --colorSurfaceLowest: #ffffff;  /* Tarjetas y modales (flotantes) */
+  
+  --colorOnSurface: #2c2f30;      /* Texto principal */
+  --colorOnSurfaceVar: #595c5d;   /* Texto secundario (labels) */
+  
+  --shadowAmbient: 0 20px 40px rgba(12, 15, 16, 0.06); /* Sombra ultra difusa Stitch */
+}
+
+/* Tipografía 'The Editorial Voice' */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--colorSurface);
+  color: var(--colorOnSurface);
+  line-height: 1.6;
+}
+
+.color-primary { color: var(--colorPrimary) !important; }
+.color-dark { color: var(--colorOnSurface) !important; }
+.text-muted { color: var(--colorOnSurfaceVar) !important; }
+
+/* The "No-Line" Rule */
+.border, .border-bottom, .border-top {
+  border-width: 0 !important;
+}
+
+/* Botones Premium */
+.btn-primary {
+  background: linear-gradient(135deg, var(--colorPrimary) 0%, var(--colorPrimaryContainer) 100%);
+  border: none;
+  border-radius: 1.5rem; /* Forma xl de Laced Precision */
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--colorPrimaryDim);
+  box-shadow: var(--shadowAmbient);
+}
+
+.btn-premium {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadowAmbient);
+}
+
+.btn-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 48px rgba(12, 15, 16, 0.08); /* Sombra acentuada on hover */
+}
+
+/* The Layering Principle (Tarjetas) */
+.card {
+  background-color: var(--colorSurfaceLowest);
+  border: none !important;
+  border-radius: 1rem !important; /* Esquinas redondeadas (16px) */
+  box-shadow: var(--shadowAmbient);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+}
+
+.premium-shadow {
+  box-shadow: var(--shadowAmbient);
+}
+
+.rounded-4 {
+  border-radius: 1rem !important;
+}
+
+/* Signature Interaction: The "Kinetic Lift" */
+.widget-card, .card-hover-kinetic {
+  background-color: var(--colorSurfaceLow);
+}
+
+.widget-card:hover, .card-hover-kinetic:hover {
+  transform: scale(1.02);
+  background-color: var(--colorSurfaceLowest);
+  box-shadow: 0 30px 60px rgba(12, 15, 16, 0.08);
+}
+
+/* The "Glass & Gradient" Rule */
+.glass-nav {
+  background-color: rgba(245, 246, 247, 0.7) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+
+/* Modificadores Tablas */
+.custom-table th {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--colorOnSurfaceVar);
+  border-bottom: none; /* No-line rule */
+  background-color: var(--colorSurfaceLow) !important;
+}
+
+.custom-table td {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--colorSurface); /* Color shift para separar */
+}
+
+/* Inputs Premium (The Ghost Border Fallback) */
+.form-control, .form-select {
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  background-color: var(--colorSurfaceLow);
+  border: 1px solid rgba(171, 173, 174, 0.15); /* Ghost outline-variant */
+  border-radius: 0.5rem;
+}
+.form-control:focus, .form-select:focus {
+  background-color: var(--colorSurfaceLowest);
+  border-color: var(--colorPrimary);
+  box-shadow: 0 0 0 1px var(--colorPrimary); /* Sólido sutil en vez del glow default de Bootstrap */
+}
+
+/* Elementos UI Login */
+.brand-icon {
+  font-size: 3.5rem;
+  line-height: 1;
+  display: inline-block;
+  background: var(--colorSurfaceLow);
+  height: 90px;
+  width: 90px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.02);
+  color: var(--colorPrimary);
+}
+
+/* POS UI */
+.cart-item-row {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pos-table td {
+  padding: 0.75rem 0.5rem;
+}
