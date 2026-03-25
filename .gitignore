@@ -1,0 +1,20 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+
+# Build artifacts
+dist/
+build/
+
+# .antigravity team state (Locks and Logs should not be commit to repo)
+.antigravity/team/locks/
+.antigravity/team/logs/
+.antigravity/team/presence.json
+! .antigravity/team/roles/
