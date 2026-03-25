@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const db = require('../database');
-const { verificarToken, verificarRol } = require('./auth');
+const { verificarToken, soloAdmin } = require('./auth');
 
 // --- Configuración de Multer ---
 const storage = multer.diskStorage({
@@ -48,7 +48,7 @@ router.get('/:id/imagenes', verificarToken, (req, res) => {
 });
 
 // --- POST /api/productos/:id/imagenes → Subir imagen(es) ---
-router.post('/:id/imagenes', verificarToken, verificarRol('ADMIN'), upload.array('imagenes', 10), (req, res) => {
+router.post('/:id/imagenes', verificarToken, soloAdmin, upload.array('imagenes', 10), (req, res) => {
     if (!req.files || req.files.length === 0) {
         return res.status(400).json({ error: 'No se subieron archivos' });
     }
@@ -109,7 +109,7 @@ router.post('/:id/imagenes', verificarToken, verificarRol('ADMIN'), upload.array
 });
 
 // --- PUT /api/productos/:id/imagenes/:imgId/principal → Marcar como imagen principal ---
-router.put('/:id/imagenes/:imgId/principal', verificarToken, verificarRol('ADMIN'), (req, res) => {
+router.put('/:id/imagenes/:imgId/principal', verificarToken, soloAdmin, (req, res) => {
     // Primero quitar la principal actual
     db.run('UPDATE producto_imagenes SET es_principal = 0 WHERE producto_id = ?', [req.params.id], (err) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -126,7 +126,7 @@ router.put('/:id/imagenes/:imgId/principal', verificarToken, verificarRol('ADMIN
 });
 
 // --- DELETE /api/productos/:id/imagenes/:imgId → Eliminar imagen ---
-router.delete('/:id/imagenes/:imgId', verificarToken, verificarRol('ADMIN'), (req, res) => {
+router.delete('/:id/imagenes/:imgId', verificarToken, soloAdmin, (req, res) => {
     db.get('SELECT * FROM producto_imagenes WHERE id = ? AND producto_id = ?',
         [req.params.imgId, req.params.id], (err, img) => {
             if (err) return res.status(500).json({ error: err.message });
