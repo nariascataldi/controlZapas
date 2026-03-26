@@ -27,4 +27,6 @@ backend/database.db
 .antigravity/team/decisions.log
 .antigravity/team/tasks.json
 ! .antigravity/team/roles/
-
+# Testing
+backend/coverage/
+backend/*.txt

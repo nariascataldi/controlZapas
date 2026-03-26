@@ -41,7 +41,11 @@ app.use('/api/usuarios', require('./routes/usuarios'));
 app.use('/api/productos', require('./routes/imagenes'));
 app.use('/api/stats', require('./routes/stats'));
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`Servidor de controlZapas corriendo en http://localhost:${PORT}`);
-});
+// Iniciar servidor solo si este archivo se ejecuta directamente
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Servidor de controlZapas corriendo en http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;
