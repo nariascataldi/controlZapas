@@ -78,21 +78,46 @@ PC Administrador (Dashboard)
 controlZapas/
 │
 ├── frontend/
+│   ├── js/
+│   │   ├── api.js
+│   │   ├── auth.js
+│   │   ├── historial.js
+│   │   ├── pos.js
+│   │   ├── dashboard.js
+│   │   └── ...
+│   ├── tests/
+│   │   ├── setup.js
+│   │   ├── api.test.js
+│   │   ├── auth.test.js
+│   │   ├── historial.test.js
+│   │   └── e2e/
+│   │       └── historial.spec.js
+│   ├── package.json
+│   ├── playwright.config.js
+│   ├── styles.css
 │   ├── index.html
-│   ├── stock.html
+│   ├── historial.html
 │   ├── ventas.html
 │   ├── dashboard.html
-│   ├── login.html
-│   ├── app.js
-│   └── styles.css
+│   ├── stock.html
+│   ├── vendedores.html
+│   └── login.html
 │
 ├── backend/
 │   ├── server.js
 │   ├── routes/
-│   │   ├── stock.js
+│   │   ├── auth.js
 │   │   ├── ventas.js
-│   │   └── users.js
-│   │
+│   │   ├── productos.js
+│   │   ├── usuarios.js
+│   │   ├── export.js
+│   │   └── stats.js
+│   ├── tests/
+│   │   ├── setup.js
+│   │   ├── auth.test.js
+│   │   ├── ventas.test.js
+│   │   ├── productos.test.js
+│   │   └── usuarios.test.js
 │   └── database.db
 ```
 
@@ -118,6 +143,35 @@ controlZapas/
 
 ---
 
+# Testing Stack
+
+## Backend Testing
+
+```bash
+cd backend
+npm test                    # Ejecutar tests
+npm run test:watch         # Modo watch
+```
+
+- Jest + Supertest
+- Tests de integración para APIs
+- Coverage automático
+
+## Frontend Testing
+
+```bash
+cd frontend
+npm install                # Instalar dependencias
+npm test                   # Tests unitarios
+npm run test:e2e          # Tests E2E (requiere backend)
+```
+
+- Jest + Testing Library (unit tests)
+- Playwright (E2E tests)
+- Mocks: localStorage, fetch, bootstrap
+
+---
+
 # Roles
 
 Administrador
@@ -127,6 +181,7 @@ Administrador
 * ve tablero y ganancias
 * crea vendedores y gestiona comisiones
 * ve historial por vendedor y por cliente
+* exporta reportes (Excel, CSV, PDF)
 
 Vendedor
 
@@ -135,5 +190,18 @@ Vendedor
 * registra ventas
 * envía disponibilidad por WhatsApp
 * ve su propio historial y comisiones
+
+---
+
+# Testing Roles (NestorBot)
+
+## API Tester
+* Tests de integración para backend
+* Validación de endpoints REST
+
+## Frontend Tester
+* Tests unitarios para módulos JS
+* Tests E2E para flujos de usuario
+* Validación de UI y responsividad
 
 ---

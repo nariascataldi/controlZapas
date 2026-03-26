@@ -13,12 +13,16 @@
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.1.1",
-    "sqlite3": "^5.1.7"
+    "pdfkit": "^0.18.0",
+    "sqlite3": "^5.1.7",
+    "tslib": "^2.8.1"
   },
   "devDependencies": {
+    "@swc/helpers": "^0.5.20",
     "cross-env": "^10.1.0",
     "jest": "^30.3.0",
     "nodemon": "^3.1.0",

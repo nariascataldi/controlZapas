@@ -40,6 +40,7 @@ app.use('/api/ventas', require('./routes/ventas'));
 app.use('/api/usuarios', require('./routes/usuarios'));
 app.use('/api/productos', require('./routes/imagenes'));
 app.use('/api/stats', require('./routes/stats'));
+app.use('/api/export', require('./routes/export'));
 
 // Iniciar servidor solo si este archivo se ejecuta directamente
 if (require.main === module) {

@@ -11,6 +11,7 @@ export function configurarNavBar() {
         ${user.rol === 'ADMIN' ? `<li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>` : ''}
         <li class="nav-item"><a class="nav-link" href="stock.html">Inventario</a></li>
         <li class="nav-item"><a class="nav-link" href="ventas.html">Punto de Venta</a></li>
+        <li class="nav-item"><a class="nav-link" href="historial.html">Historial</a></li>
         ${user.rol === 'ADMIN' ? `<li class="nav-item"><a class="nav-link" href="vendedores.html">Vendedores</a></li>` : ''}
         <li class="nav-item ms-lg-3 d-flex align-items-center">
             <span class="text-white-50 small me-3"><i class="bi bi-person-circle"></i> ${user.nombre}</span>

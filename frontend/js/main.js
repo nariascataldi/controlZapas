@@ -45,3 +45,9 @@ if (window.location.pathname.endsWith('vendedores.html')) {
         m.cargarListaUsuarios();
     });
 }
+
+if (window.location.pathname.endsWith('historial.html')) {
+    import('./historial.js').then(m => {
+        m.initHistorial();
+    });
+}
