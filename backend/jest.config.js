@@ -1,8 +1,9 @@
 module.exports = {
   testEnvironment: 'node',
+  moduleNameMapper: {
+    '^tslib$': 'tslib'
+  },
+  moduleDirectories: ['node_modules', 'src'],
   verbose: true,
-  collectCoverage: true,
-  coverageDirectory: 'coverage',
-  testMatch: ['**/tests/**/*.test.js'],
-  setupFilesAfterEnv: ['./tests/setup.js']
+  testTimeout: 10000
 };

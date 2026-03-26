@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const bcrypt = require('bcrypt');
 
 const dbFile = process.env.NODE_ENV === 'test' ? 'database_test.db' : 'database.db';
 const dbPath = path.resolve(__dirname, dbFile);
@@ -64,6 +65,8 @@ function initDB() {
             vendedor_id INTEGER NOT NULL,
             total REAL NOT NULL,
             comision_calculada REAL NOT NULL DEFAULT 0,
+            metodo_pago TEXT,
+            estado TEXT DEFAULT 'Pagado',
             FOREIGN KEY (cliente_id) REFERENCES clientes(id),
             FOREIGN KEY (vendedor_id) REFERENCES usuarios(id)
         )`);
@@ -99,7 +102,6 @@ function initDB() {
 }
 
 function crearAdminPorDefecto() {
-    const bcrypt = require('bcrypt');
     const dbQuery = `SELECT id FROM usuarios WHERE rol = 'ADMIN' LIMIT 1`;
     db.get(dbQuery, [], (err, row) => {
         if (err) {

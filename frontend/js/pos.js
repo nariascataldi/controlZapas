@@ -278,10 +278,15 @@ if (formCheckout) {
         if (totalDescuentoCalculado > totalSubtotalBruto) totalDescuentoCalculado = totalSubtotalBruto;
         let totalCostoFinal = totalSubtotalBruto - totalDescuentoCalculado;
 
+        const metodo_pago = document.getElementById('saleMetodoPago').value;
+        const estado = document.getElementById('saleEstado').value;
+
         const payload = {
             cliente_nombre: cliente,
             contacto: tel,
             total: totalCostoFinal,
+            metodo_pago,
+            estado,
             detalles
         };
 
@@ -316,7 +321,10 @@ export function nuevaVentaPOS() {
 
     const modalEl = document.getElementById('modalVentaOk');
     const modal = bootstrap.Modal.getInstance(modalEl);
-    if (modal) modal.hide();
+    if (modal) {
+        document.getElementById('posBuscador')?.focus();
+        setTimeout(() => modal.hide(), 50);
+    }
 }
 
 window.buscarPos = buscarPos;

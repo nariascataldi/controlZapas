@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Ventas | controlZapas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-light pb-5">
+
+    <div class="container mt-3 mb-4">
+        <nav class="navbar navbar-expand-lg rounded-4 glass-nav px-3 py-2">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold color-primary" href="dashboard.html" id="navBrand">
+                    👟 controlZapas
+                </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto" id="navLinks"></ul>
+            </div>
+        </nav>
+    </div>
+
+    <div class="container mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h2 class="fw-bold mb-0">Historial de Ventas</h2>
+                <p class="text-muted small mb-0" id="historialSummary">Cargando...</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <div class="btn-group" id="exportGroup">
+                    <button class="btn btn-outline-primary dropdown-toggle btn-sm" data-bs-toggle="dropdown">
+                        <i class="bi bi-download me-1"></i> Exportar
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" onclick="exportarVentas('excel'); return false;"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Excel</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportarVentas('csv'); return false;"><i class="bi bi-file-earmark-text me-2"></i>CSV</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportarVentas('pdf'); return false;"><i class="bi bi-file-pdf me-2"></i>PDF</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportarSeleccionadas(); return false;" id="exportSelectedBtn" style="display:none;"><i class="bi bi-check-circle me-2"></i>Exportar Seleccionadas</a></li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="cargarVentas()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="filter-section shadow-sm mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 cursor-pointer" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
+                <h6 class="fw-bold mb-0 text-uppercase small" style="letter-spacing:0.05em;">
+                    <i class="bi bi-funnel-fill me-2 text-primary"></i> Filtros de Búsqueda
+                </h6>
+                <i class="bi bi-chevron-down transition-icon"></i>
+            </div>
+            <div class="collapse show" id="filtersCollapse">
+                <form id="formFiltros" class="row g-3">
+                    <div class="col-12 col-md-3">
+                        <label class="meta-label">ID Venta / Cliente</label>
+                        <input type="text" class="form-control form-control-sm" id="filtroSearch" placeholder="Buscar...">
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="meta-label">Producto</label>
+                        <input type="text" class="form-control form-control-sm" id="filtroProducto" placeholder="Nombre de producto...">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="meta-label">Desde</label>
+                        <input type="date" class="form-control form-control-sm" id="filtroDesde">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="meta-label">Hasta</label>
+                        <input type="date" class="form-control form-control-sm" id="filtroHasta">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="meta-label">Método de Pago</label>
+                        <select class="form-select form-select-sm" id="filtroMetodo">
+                            <option value="">Todos</option>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Tarjeta">Tarjeta</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="meta-label">Estado</label>
+                        <select class="form-select form-select-sm" id="filtroEstado">
+                            <option value="">Todos</option>
+                            <option value="Pagado">Pagado</option>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-2" id="filtroVendedorContainer" style="display:none;">
+                        <label class="meta-label">Vendedor</label>
+                        <select class="form-select form-select-sm" id="filtroVendedor">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                            <i class="bi bi-search me-1"></i> Buscar
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnLimpiarFiltros">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover data-table mb-0">
+                    <thead class="table-light sticky-header">
+                        <tr>
+                            <th class="text-center" style="width:40px;">
+                                <input type="checkbox" class="form-check-input" id="selectAll">
+                            </th>
+                            <th class="sortable" data-sort="id" data-column="v.id">
+                                # <i class="bi bi-chevron-expand sort-icon"></i>
+                            </th>
+                            <th class="sortable" data-sort="fecha" data-column="v.fecha">
+                                Fecha <i class="bi bi-chevron-expand sort-icon"></i>
+                            </th>
+                            <th class="sortable" data-sort="cliente" data-column="c.nombre">
+                                Cliente <i class="bi bi-chevron-expand sort-icon"></i>
+                            </th>
+                            <th>Productos</th>
+                            <th class="sortable text-end" data-sort="total" data-column="v.total">
+                                Total <i class="bi bi-chevron-expand sort-icon"></i>
+                            </th>
+                            <th>Método</th>
+                            <th>Estado</th>
+                            <th class="sortable" data-sort="vendedor" data-column="u.nombre">
+                                Vendedor <i class="bi bi-chevron-expand sort-icon"></i>
+                            </th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historialBody">
+                        <tr>
+                            <td colspan="10" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 text-muted mb-0">Cargando historial...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="card-footer bg-white border-top">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <label class="meta-label mb-0">Mostrar:</label>
+                        <select class="form-select form-select-sm" id="pageSize" style="width:auto;">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span class="meta-label mb-0">registros</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2" id="paginationInfo">
+                        <span class="text-muted small">Mostrando 0-0 de 0</span>
+                    </div>
+                    <nav aria-label="Paginación">
+                        <ul class="pagination pagination-sm mb-0" id="paginationNav">
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <div id="emptyState" class="text-center py-5" style="display:none;">
+            <i class="bi bi-search display-1 text-muted opacity-25"></i>
+            <h4 class="fw-bold mt-3">No hay resultados</h4>
+            <p class="text-muted">Prueba ajustando los filtros de búsqueda</p>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalDetalleVenta" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold mb-0">Detalle de Venta #<span id="detVentaId"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" id="detVentaBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditarVenta" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-0">
+                    <h5 class="fw-bold mb-0">Editar Venta #<span id="editVentaId"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formEditarVenta">
+                        <div class="mb-3">
+                            <label class="meta-label">Estado</label>
+                            <select class="form-select" id="editEstado">
+                                <option value="Pagado">Pagado</option>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="Cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="meta-label">Método de Pago</label>
+                            <select class="form-select" id="editMetodoPago">
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Tarjeta">Tarjeta</option>
+                            </select>
+                        </div>
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-0">
+                    <h5 class="fw-bold mb-0">Confirmar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <i class="bi bi-exclamation-triangle-fill text-danger display-5"></i>
+                    <p class="mt-3 mb-0">¿Estás seguro de eliminar esta venta? Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalImprimir" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-0">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-printer me-2"></i>Imprimir Venta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <p>Se descargará un PDF con el detalle de la venta para imprimir.</p>
+                </div>
+                <div class="modal-footer border-0 pt-0 justify-content-center">
+                    <button type="button" class="btn btn-primary" id="btnDescargarPDF">
+                        <i class="bi bi-download me-2"></i>Descargar PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toastMessage" class="toast align-items-center text-bg-primary border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body" id="toastBody"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="js/main.js"></script>
+    <script>
+        window.exportarVentas = (tipo) => {
+            if (window.historialModule && window.historialModule.exportar) {
+                window.historialModule.exportar(tipo);
+            }
+        };
+        window.cargarVentas = () => {
+            if (window.historialModule && window.historialModule.cargarVentas) {
+                window.historialModule.cargarVentas();
+            }
+        };
+        window.exportarSeleccionadas = () => {
+            if (window.historialModule && window.historialModule.exportarSeleccionadas) {
+                window.historialModule.exportarSeleccionadas();
+            }
+        };
+    </script>
+</body>
+</html>
