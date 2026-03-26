@@ -1,0 +1,414 @@
+import { fetchAPI, API_URL } from './api.js';
+import { getUser } from './auth.js';
+import { formatCurrency } from './utils.js';
+
+let inventarioGlobal = [];
+let variantesTemporales = [];
+let imagenesTemporales = [];
+
+export async function cargarInventario() {
+    if (!window.location.pathname.endsWith('stock.html')) return;
+    try {
+        const data = await fetchAPI('/productos');
+        inventarioGlobal = data;
+        renderStock();
+
+        if (getUser().rol === 'ADMIN') {
+            document.getElementById('btnAdminNuevoProd').classList.remove('d-none');
+        }
+    } catch (e) { console.error(e); }
+}
+
+function bgAlert(stock, min) {
+    if (stock === 0) return 'bg-danger text-white';
+    if (stock <= min) return 'bg-warning text-dark';
+    return 'bg-success bg-opacity-10 text-success';
+}
+
+export function generarLinkWhatsapp(prod) {
+    const userRole = getUser().rol;
+    const precio = userRole === 'ADMIN' ? prod.precio_mayorista : prod.precio_minorista;
+    const msg = `¡Hola! Te confirmo que tenemos disponibles las ${prod.nombre} en talla ${prod.talla}. El precio es de ${formatCurrency(precio)}. ¿Te las reservo?`;
+    const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+}
+
+export function renderStock(lista = inventarioGlobal) {
+    const tbody = document.getElementById('tablaStockBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const user = getUser();
+    const isAdmin = user && user.rol && user.rol.toUpperCase() === 'ADMIN';
+
+    lista.forEach(item => {
+        const pMostrar = isAdmin ?
+            `<div class="fw-bold text-dark">${formatCurrency(item.precio_mayorista)}</div><div class="small text-muted">${formatCurrency(item.precio_minorista)} min</div>` :
+            `<div class="fw-bold text-dark">${formatCurrency(item.precio_minorista)}</div>`;
+
+        if (!item.sku) return;
+
+        const isLowStock = item.stock_actual <= (item.stock_minimo || 2);
+        const disableClass = item.stock_actual <= 0 ? 'opacity-50' : '';
+        
+        let stockBadge = '';
+        if (item.stock_actual <= 0) {
+            stockBadge = `<div class="d-flex flex-column align-items-center"><span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1 fw-bold">Agotado</span></div>`;
+        } else if (isLowStock) {
+            stockBadge = `<div class="d-flex flex-column align-items-center gap-1">
+                            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1 fw-bold">${item.stock_actual} Unids.</span>
+                            <span class="text-danger fw-bolder" style="font-size: 0.6rem; letter-spacing: 0.5px; text-transform: uppercase;">Stock Bajo</span>
+                          </div>`;
+        } else {
+            stockBadge = `<div class="d-flex justify-content-center"><span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1 fw-bold">${item.stock_actual} Unids.</span></div>`;
+        }
+
+        const itemJson = JSON.stringify(item).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        
+        tbody.innerHTML += `
+            <tr class="align-middle border-bottom border-light hover-bg-light transition-all ${disableClass}">
+                <td class="py-3 ps-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stock-thumb bg-white rounded-3 shadow-sm border p-1" style="width: 50px; height: 50px; flex-shrink: 0;" data-item="${itemJson}">
+                            <div class="w-100 h-100 bg-light rounded-2 d-flex align-items-center justify-content-center text-muted">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="fw-bold text-dark d-block mb-1" style="font-size: 0.95rem;">${item.nombre}</span>
+                            <span class="text-muted fw-medium" style="font-size: 0.8rem;">${item.marca || 'Sin marca'}</span>
+                        </div>
+                    </div>
+                </td>
+                <td class="py-3">
+                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                        <span class="badge bg-light text-dark border"><i class="bi bi-circle-fill text-secondary me-1" style="font-size:0.5rem"></i>${item.color || '-'}</span>
+                        <span class="badge bg-secondary text-white rounded-pill">Talla ${item.talla}</span>
+                    </div>
+                </td>
+                <td class="py-3 font-monospace text-muted small tracking-tight">
+                    ${item.sku}
+                </td>
+                <td class="py-3">
+                    ${pMostrar}
+                </td>
+                <td class="py-3 text-center">
+                    ${stockBadge}
+                </td>
+                <td class="py-3 text-end pe-3">
+                    <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-light text-dark border-0 px-2 rounded-pill" title="Ver Galería" onclick="verGaleriaStock(${item.producto_id}, '${item.nombre.replace(/'/g, "\\'")}')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        ${isLowStock ? `<button class="btn btn-sm btn-light text-success border-0 px-2 rounded-pill" title="Solicitar Proveedor" onclick="event.stopPropagation(); window.open('https://wa.me/?text=Necesitamos%20reposición%20del%20SKU%20${item.sku}')"><i class="bi bi-whatsapp"></i></button>` : ''}
+                        ${isAdmin ? `
+                            <button class="btn btn-sm btn-light text-primary border-0 px-2 rounded-pill" title="Ajustar Stock" onclick="abrirModalAjustarStock(${item.variante_id}, ${item.stock_actual})">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-light text-danger border-0 px-2 rounded-pill" title="Eliminar Variante" onclick="eliminarVariante(${item.variante_id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    cargarThumbsStock(lista);
+}
+
+export async function cargarThumbsStock(lista) {
+    const pids = [...new Set(lista.map(i => i.producto_id))];
+    for (let pid of pids) {
+        try {
+            const imgs = await fetchAPI('/productos/' + pid + '/imagenes');
+            if (imgs && imgs.length > 0) {
+                const principal = imgs[0];
+                const thumbs = document.querySelectorAll('.stock-thumb');
+                thumbs.forEach(thumb => {
+                    try {
+                        const cardItem = JSON.parse(thumb.dataset.item ? thumb.dataset.item.replace(/&quot;/g, '"') : '{}');
+                        if (cardItem.producto_id === pid) {
+                            thumb.innerHTML = '<img src="' + API_URL.replace('/api', '') + principal.ruta + '" alt="thumb" class="rounded-2" style="width:100%;height:100%;object-fit:cover;">';
+                        }
+                    } catch (e) {
+                         console.error(e);
+                    }
+                });
+            }
+        } catch (e) { console.error('Error cargando thumb:', e); }
+    }
+}
+
+export function filtrarStock() {
+    const text = document.getElementById('busquedaStock').value.toLowerCase();
+    const filtrado = inventarioGlobal.filter(i =>
+        (i.nombre && i.nombre.toLowerCase().includes(text)) ||
+        (i.sku && i.sku.toLowerCase().includes(text)) ||
+        (i.talla && i.talla.toString().includes(text))
+    );
+    renderStock(filtrado);
+}
+
+export function agregarVarianteTemporal() {
+    const s = document.getElementById('varSku').value;
+    const c = document.getElementById('varColor').value;
+    const t = document.getElementById('varTalla').value;
+    const st = parseInt(document.getElementById('varStock').value);
+    const m = parseInt(document.getElementById('varMin').value);
+
+    if (!s || !t || isNaN(st)) return alert('Llena SKU, Talla y Stock');
+
+    variantesTemporales.push({ sku: s, color: c, talla: t, stock_actual: st, stock_minimo: m || 0 });
+    renderVariantesTemp();
+
+    document.getElementById('varSku').value = '';
+    document.getElementById('varTalla').value = '';
+}
+
+export function renderVariantesTemp() {
+    const lb = document.getElementById('listaVariantesTemp');
+    lb.innerHTML = '';
+    variantesTemporales.forEach((v, idx) => {
+        lb.innerHTML += `<tr>
+            <td>${v.sku}</td><td>${v.color}</td><td>${v.talla}</td><td>${v.stock_actual}</td><td>${v.stock_minimo}</td>
+            <td><button type="button" class="btn btn-sm btn-danger py-0" onclick="variantesTemporales.splice(${idx},1); renderVariantesTemp()"><i class="bi bi-x"></i></button></td>
+        </tr>`;
+    });
+}
+
+export function handleDrop(event) {
+    event.preventDefault();
+    const dropZone = document.getElementById('dropZone');
+    dropZone.style.borderColor = 'rgba(171,173,174,0.3)';
+    dropZone.style.background = 'var(--bg-surface-container-low, #eff1f2)';
+
+    const files = event.dataTransfer.files;
+    if (files.length > 0) previsualizarImagenes(files);
+}
+
+export function previsualizarImagenes(files) {
+    const container = document.getElementById('galeriaPreview');
+    if (!container) return;
+
+    Array.from(files).forEach((file, idx) => {
+        if (!file.type.startsWith('image/')) return;
+        if (file.size > 5 * 1024 * 1024) {
+            alert(`"${file.name}" excede el límite de 5MB.`);
+            return;
+        }
+
+        imagenesTemporales.push(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const index = imagenesTemporales.length - 1;
+            const thumb = document.createElement('div');
+            thumb.className = 'position-relative';
+            thumb.style.cssText = 'width:100px; height:100px; border-radius:8px; overflow:hidden; transition:transform 0.2s;';
+            thumb.id = `thumb-${index}`;
+            thumb.innerHTML = `
+                <img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">
+                <button type="button" class="btn btn-sm position-absolute top-0 end-0 m-1 p-0 d-flex align-items-center justify-content-center"
+                        style="width:22px; height:22px; background:rgba(180,19,64,0.85); border-radius:50%; border:none;"
+                        onclick="quitarImagenTemporal(${index})"
+                        title="Quitar">
+                    <i class="bi bi-x text-white" style="font-size:14px;"></i>
+                </button>
+                ${index === 0 ? '<span class="position-absolute bottom-0 start-0 badge bg-primary m-1" style="font-size:0.6rem;">Principal</span>' : ''}
+            `;
+            container.appendChild(thumb);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    document.getElementById('inputImagenes').value = '';
+}
+
+export function quitarImagenTemporal(index) {
+    imagenesTemporales.splice(index, 1);
+    renderGaleriaPreviewLocal();
+}
+
+export function renderGaleriaPreviewLocal() {
+    const container = document.getElementById('galeriaPreview');
+    if (!container) return;
+    container.innerHTML = '';
+
+    imagenesTemporales.forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const thumb = document.createElement('div');
+            thumb.className = 'position-relative';
+            thumb.style.cssText = 'width:100px; height:100px; border-radius:8px; overflow:hidden;';
+            thumb.innerHTML = `
+                <img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">
+                <button type="button" class="btn btn-sm position-absolute top-0 end-0 m-1 p-0 d-flex align-items-center justify-content-center"
+                        style="width:22px; height:22px; background:rgba(180,19,64,0.85); border-radius:50%; border:none;"
+                        onclick="quitarImagenTemporal(${idx})" title="Quitar">
+                    <i class="bi bi-x text-white" style="font-size:14px;"></i>
+                </button>
+                ${idx === 0 ? '<span class="position-absolute bottom-0 start-0 badge bg-primary m-1" style="font-size:0.6rem;">Principal</span>' : ''}
+            `;
+            container.appendChild(thumb);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+export function limpiarGaleriaPreview() {
+    const container = document.getElementById('galeriaPreview');
+    if (container) container.innerHTML = '';
+    imagenesTemporales = [];
+}
+
+export async function subirImagenesAlProducto(productoId) {
+    const formData = new FormData();
+    imagenesTemporales.forEach(file => formData.append('imagenes', file));
+
+    const token = localStorage.getItem('cz_token');
+    try {
+        const response = await fetch(`${API_URL}/productos/${productoId}/imagenes`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Error subiendo imágenes');
+        console.log(`${data.imagenes.length} imagen(es) subida(s) al producto ${productoId}`);
+    } catch (err) {
+        console.error('Error subiendo imágenes:', err);
+        alert('El producto se guardó, pero hubo un error subiendo las imágenes: ' + err.message);
+    }
+}
+
+export function abrirModalAjustarStock(varId, stockActual) {
+    document.getElementById('ajustarVarId').value = varId;
+    document.getElementById('ajustarStockNum').value = stockActual;
+    const modal = new bootstrap.Modal(document.getElementById('modalAjustarStock'));
+    modal.show();
+}
+
+export async function confirmarAjustarStock() {
+    const varId = document.getElementById('ajustarVarId').value;
+    const nuevoStock = document.getElementById('ajustarStockNum').value;
+    
+    try {
+        await fetchAPI(`/productos/variantes/${varId}/stock`, { 
+            method: 'PUT', 
+            body: JSON.stringify({ stock_actual: parseInt(nuevoStock) }) 
+        });
+        
+        const modalEl = document.getElementById('modalAjustarStock');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        
+        cargarInventario();
+    } catch (e) { 
+        alert('Error: ' + e.message); 
+    }
+}
+
+export async function verGaleriaStock(prodId, nombre) {
+    try {
+        const imgs = await fetchAPI(`/productos/${prodId}/imagenes`);
+        const inner = document.getElementById('carouselInnerStock');
+        const titulo = document.getElementById('galeriaTitulo');
+        
+        titulo.textContent = nombre;
+        inner.innerHTML = '';
+        
+        if (!imgs || imgs.length === 0) {
+            inner.innerHTML = `
+                <div class="carousel-item active">
+                    <div class="d-flex align-items-center justify-content-center bg-dark" style="height: 400px;">
+                        <div class="text-center">
+                            <i class="bi bi-image text-white-50" style="font-size: 4rem;"></i>
+                            <p class="mt-2 text-white-50">Sin imágenes disponibles</p>
+                        </div>
+                    </div>
+                </div>`;
+        } else {
+            imgs.forEach((img, idx) => {
+                inner.innerHTML += `
+                    <div class="carousel-item ${idx === 0 ? 'active' : ''}">
+                        <img src="${API_URL.replace('/api', '')}${img.ruta}" class="d-block w-100" style="height: 400px; object-fit: contain; background: #000;">
+                    </div>`;
+            });
+        }
+        
+        const modal = new bootstrap.Modal(document.getElementById('modalGaleriaStock'));
+        modal.show();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+export async function eliminarVariante(id) {
+    if (confirm('¿Estás seguro de eliminar esta variante (talla/color)? Esta acción no se puede deshacer.')) {
+        try {
+            await fetchAPI(`/productos/variantes/${id}`, { method: 'DELETE' });
+            cargarInventario();
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    }
+}
+
+const formNuevoP = document.getElementById('formNuevoProducto');
+
+if (formNuevoP) {
+    formNuevoP.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            nombre: document.getElementById('prodNombre').value,
+            marca: document.getElementById('prodMarca').value,
+            precio_mayorista: parseFloat(document.getElementById('prodMayorista').value),
+            precio_minorista: parseFloat(document.getElementById('prodMinorista').value),
+            categoria: '',
+            variantes: variantesTemporales
+        };
+
+        try {
+            const producto = await fetchAPI('/productos', { method: 'POST', body: JSON.stringify(payload) });
+
+            if (imagenesTemporales.length > 0 && producto && producto.id) {
+                await subirImagenesAlProducto(producto.id);
+            }
+
+            alert('Producto Guardado!');
+            const modalEl = document.getElementById('modalNuevoProd');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            formNuevoP.reset();
+            variantesTemporales = [];
+            imagenesTemporales = [];
+            renderVariantesTemp();
+            limpiarGaleriaPreview();
+            cargarInventario();
+        } catch (e) { alert('Error: ' + e.message); }
+    });
+}
+
+window.renderStock = renderStock;
+window.cargarInventario = cargarInventario;
+window.filtrarStock = filtrarStock;
+window.agregarVarianteTemporal = agregarVarianteTemporal;
+window.renderVariantesTemp = renderVariantesTemp;
+window.handleDrop = handleDrop;
+window.previsualizarImagenes = previsualizarImagenes;
+window.quitarImagenTemporal = quitarImagenTemporal;
+window.renderGaleriaPreviewLocal = renderGaleriaPreviewLocal;
+window.limpiarGaleriaPreview = limpiarGaleriaPreview;
+window.subirImagenesAlProducto = subirImagenesAlProducto;
+window.abrirModalAjustarStock = abrirModalAjustarStock;
+window.confirmarAjustarStock = confirmarAjustarStock;
+window.verGaleriaStock = verGaleriaStock;
+window.eliminarVariante = eliminarVariante;
+window.generarLinkWhatsapp = generarLinkWhatsapp;
+
+// Exponer variables de estado para el onclick del HTML
+window.inventarioGlobal = inventarioGlobal;
+window.variantesTemporales = variantesTemporales;
+window.imagenesTemporales = imagenesTemporales;
