@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,25 +11,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Estilos Laced Precision Específicos */
-        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; color: #1f2937; }
-        
-        .glass-nav { 
-            background: rgba(255, 255, 255, 0.85); 
-            backdrop-filter: blur(12px); 
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #1f2937;
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.4); 
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04); 
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
             border-radius: 16px;
         }
 
         .header-gradient {
-            background: linear-gradient(135deg, rgba(20,20,20,1) 0%, rgba(50,50,50,1) 100%);
+            background: linear-gradient(135deg, rgba(20, 20, 20, 1) 0%, rgba(50, 50, 50, 1) 100%);
             border-radius: 20px;
             color: white;
             padding: 2.5rem;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
         /* Panel Cards (No-line rule) */
@@ -36,12 +41,22 @@
             background: #ffffff;
             border: none;
             border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
             height: 100%;
             overflow: hidden;
         }
-        .panel-header { padding: 1.5rem 1.5rem 0.5rem; background: transparent; border-bottom: none; }
-        .panel-title { font-size: 1.1rem; font-weight: 700; color: #111827; }
+
+        .panel-header {
+            padding: 1.5rem 1.5rem 0.5rem;
+            background: transparent;
+            border-bottom: none;
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #111827;
+        }
 
         .table-laced th {
             color: #9ca3af;
@@ -52,8 +67,11 @@
             border-bottom: 1px solid #f3f4f6;
             padding-bottom: 0.8rem;
         }
-        .table-laced td { border: none !important; }
-        
+
+        .table-laced td {
+            border: none !important;
+        }
+
         /* Layering Principle para las tarjetas */
         .glass-card {
             background: rgba(255, 255, 255, 0.8);
@@ -61,10 +79,11 @@
             border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: 16px;
             padding: 1.5rem;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
+
 <body>
 
     <!-- Transparent Navbar -->
@@ -72,20 +91,27 @@
         <nav class="navbar navbar-expand-lg glass-nav px-4 py-3">
             <div class="container-fluid p-0">
                 <a class="navbar-brand fw-bold" href="dashboard.html" style="color: #1a1a1a;">
-                    <i class="bi bi-box-fill me-2" style="color: #b41340;"></i> controlZapas 
-                    <span class="badge rounded-pill bg-dark ms-2" style="font-size: 0.65rem; font-weight: 500;">ADMIN</span>
+                    <i class="bi bi-box-fill me-2" style="color: #b41340;"></i> controlZapas
+                    <span class="badge rounded-pill bg-dark ms-2"
+                        style="font-size: 0.65rem; font-weight: 500;">ADMIN</span>
                 </a>
-                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCore">
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarCore">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarCore">
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
-                        <li class="nav-item"><a class="nav-link fw-medium text-secondary px-3" href="dashboard.html">Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link fw-medium text-secondary px-3" href="stock.html">Inventario</a></li>
-                        <li class="nav-item"><a class="nav-link fw-medium text-secondary px-3" href="ventas.html">Punto de Venta</a></li>
-                        <li class="nav-item"><a class="nav-link fw-medium px-3 active" href="vendedores.html">Staff</a></li>
+                        <li class="nav-item"><a class="nav-link fw-medium text-secondary px-3"
+                                href="dashboard.html">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link fw-medium text-secondary px-3"
+                                href="stock.html">Inventario</a></li>
+                        <li class="nav-item"><a class="nav-link fw-medium text-secondary px-3" href="ventas.html">Punto
+                                de Venta</a></li>
+                        <li class="nav-item"><a class="nav-link fw-medium px-3 active" href="vendedores.html">Staff</a>
+                        </li>
                         <li class="nav-item ms-lg-2">
-                            <button class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold shadow-sm" style="background:#1a1a1a;" onclick="logout()">
+                            <button class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold shadow-sm"
+                                style="background:#1a1a1a;" onclick="logout()">
                                 Salir <i class="bi bi-box-arrow-right ms-1"></i>
                             </button>
                         </li>
@@ -97,7 +123,7 @@
 
     <!-- Main Content -->
     <div class="container pb-5">
-        
+
         <!-- Welcome Banner -->
         <div class="header-gradient mb-5 d-flex justify-content-between align-items-center">
             <div class="position-relative" style="z-index: 2;">
@@ -105,19 +131,21 @@
                 <p class="text-white-50 mb-0">Gestión de vendedores, accesos y métricas de rendimiento.</p>
             </div>
             <div class="position-relative" style="z-index: 2;">
-                <button class="btn btn-light rounded-pill px-4 fw-semibold text-dark shadow" data-bs-toggle="modal" data-bs-target="#modalUsuario">
+                <button class="btn btn-light rounded-pill px-4 fw-semibold text-dark shadow" data-bs-toggle="modal"
+                    data-bs-target="#modalUsuario">
                     <i class="bi bi-person-plus me-2"></i> Nuevo Vendedor
                 </button>
             </div>
         </div>
 
         <div class="row g-4">
-            
+
             <!-- Lista de Staff -->
             <div class="col-12 col-lg-8">
                 <div class="panel-card p-2">
                     <div class="panel-header mb-3">
-                        <h5 class="panel-title"><i class="bi bi-people-fill me-2" style="color: #b41340;"></i>Directorio de Staff</h5>
+                        <h5 class="panel-title"><i class="bi bi-people-fill me-2" style="color: #b41340;"></i>Directorio
+                            de Staff</h5>
                     </div>
                     <div class="card-body px-4 pb-4">
                         <div class="table-responsive">
@@ -132,7 +160,12 @@
                                 </thead>
                                 <tbody id="listaUsuariosBody">
                                     <!-- Carga por JS -->
-                                    <tr><td colspan="4" class="text-center text-muted border-0"><div class="spinner-border spinner-border-sm me-2"></div>Cargando usuarios...</td></tr>
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted border-0">
+                                            <div class="spinner-border spinner-border-sm me-2"></div>Cargando
+                                            usuarios...
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -143,20 +176,26 @@
             <!-- Resumen de Sistema -->
             <div class="col-12 col-lg-4">
                 <div class="glass-card mb-4" style="border: 1px solid rgba(0,0,0,0.05);">
-                    <h6 class="fw-bold color-dark mb-3"><i class="bi bi-shield-check me-2 text-primary"></i>Roles del Sistema</h6>
+                    <h6 class="fw-bold color-dark mb-3"><i class="bi bi-shield-check me-2 text-primary"></i>Roles del
+                        Sistema</h6>
                     <div class="d-flex align-items-center mb-3">
                         <span class="badge bg-dark rounded-pill me-3" style="font-size: 0.75rem;">ADMIN</span>
-                        <small class="text-muted">Acceso total: Panel de control, creación de personal, inventario y finanzas.</small>
+                        <small class="text-muted">Acceso total: Panel de control, creación de personal, inventario y
+                            finanzas.</small>
                     </div>
                     <div class="d-flex align-items-center">
-                        <span class="badge border border-secondary text-secondary rounded-pill me-3" style="font-size: 0.75rem;">VENDEDOR</span>
-                        <small class="text-muted">Acceso limitado: Punto de venta, consulta de stock y revisión de su propio historial.</small>
+                        <span class="badge border border-secondary text-secondary rounded-pill me-3"
+                            style="font-size: 0.75rem;">VENDEDOR</span>
+                        <small class="text-muted">Acceso limitado: Punto de venta, consulta de stock y revisión de su
+                            propio historial.</small>
                     </div>
                 </div>
 
                 <div class="glass-card" style="border: 1px solid rgba(0,0,0,0.05);">
-                    <h6 class="fw-bold color-dark mb-3"><i class="bi bi-cash-coin me-2 text-success"></i>Lógicas de Comisión</h6>
-                    <small class="text-muted">La comisión se calcula sobre el total final facturado por cada asesor en el POS. Puedes ajustar individualmente el porcentaje para incentivar las ventas.</small>
+                    <h6 class="fw-bold color-dark mb-3"><i class="bi bi-cash-coin me-2 text-success"></i>Lógicas de
+                        Comisión</h6>
+                    <small class="text-muted">La comisión se calcula sobre el total final facturado por cada asesor en
+                        el POS. Puedes ajustar individualmente el porcentaje para incentivar las ventas.</small>
                 </div>
             </div>
 
@@ -166,7 +205,8 @@
     <!-- Modal ABM Usuario -->
     <div class="modal fade" id="modalUsuario" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg" style="background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);">
+            <div class="modal-content rounded-4 border-0 shadow-lg"
+                style="background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);">
                 <div class="modal-header border-0 pb-0 px-4 pt-4">
                     <h5 class="modal-title fw-bold color-dark" id="modalUsuarioLabel">Nuevo Integrante de Staff</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -178,16 +218,19 @@
                             <label class="form-label fs-7 fw-medium text-muted mb-1">Nombre de Usuario</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0"><i class="bi bi-person"></i></span>
-                                <input type="text" class="form-control bg-light border-0" id="userNombre" required placeholder="ej: JuanPerez">
+                                <input type="text" class="form-control bg-light border-0" id="userNombre" required
+                                    placeholder="ej: JuanPerez">
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fs-7 fw-medium text-muted mb-1">Contraseña</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0"><i class="bi bi-key"></i></span>
-                                <input type="password" class="form-control bg-light border-0" id="userPassword" placeholder="Dejar vacío si no se desea cambiar">
+                                <input type="password" class="form-control bg-light border-0" id="userPassword"
+                                    placeholder="Dejar vacío si no se desea cambiar">
                             </div>
-                            <div class="form-text fs-8 mt-1" id="userPasswordHelp">Requerida al crear un nuevo usuario.</div>
+                            <div class="form-text fs-8 mt-1" id="userPasswordHelp">Requerida al crear un nuevo usuario.
+                            </div>
                         </div>
                         <div class="row g-3">
                             <div class="col-6">
@@ -200,13 +243,15 @@
                             <div class="col-6">
                                 <label class="form-label fs-7 fw-medium text-muted mb-1">% de Comisión</label>
                                 <div class="input-group">
-                                    <input type="number" class="form-control bg-light border-0" id="userComision" min="0" step="0.1" value="0">
+                                    <input type="number" class="form-control bg-light border-0" id="userComision"
+                                        min="0" step="0.1" value="0">
                                     <span class="input-group-text bg-light border-0">%</span>
                                 </div>
                             </div>
                         </div>
                         <div class="mt-4 d-grid">
-                            <button type="submit" class="btn btn-dark rounded-pill py-2 fw-semibold">Gudar Usuario</button>
+                            <button type="submit" class="btn btn-dark rounded-pill py-2 fw-semibold">Guardar
+                                Usuario</button>
                         </div>
                     </form>
                 </div>
@@ -223,4 +268,5 @@
         });
     </script>
 </body>
+
 </html>
