@@ -49,13 +49,13 @@
                 <div class="table-responsive">
                     <table class="table custom-table align-middle mb-0">
                         <thead>
-                            <tr>
-                                <th class="ps-2">Modelo</th>
-                                <th>Detalle (Color/Talla)</th>
-                                <th>SKU</th>
-                                <th>Precio</th>
-                                <th>Stock</th>
-                                <th class="text-end pe-2">Acción</th>
+                            <tr class="text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                                <th class="ps-3 fw-bold border-0">Producto</th>
+                                <th class="fw-bold border-0">Detalle (Color/Talla)</th>
+                                <th class="fw-bold border-0">SKU</th>
+                                <th class="fw-bold border-0">Precio</th>
+                                <th class="fw-bold border-0 text-center">Stock</th>
+                                <th class="text-end pe-3 fw-bold border-0">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaStockBody">
@@ -161,6 +161,53 @@
                             <button type="submit" class="btn btn-primary rounded-3 btn-premium ms-2">Guardar Producto</button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ajustar Stock (Admin) -->
+    <div class="modal fade" id="modalAjustarStock" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 premium-shadow">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold">Actualizar Stock</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="ajustarVarId">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Cantidad Actual</label>
+                        <input type="number" id="ajustarStockNum" class="form-control rounded-3 border-light bg-light fw-bold" min="0">
+                    </div>
+                    <button class="btn btn-dark w-100 rounded-pill py-2 fw-bold" onclick="confirmarAjustarStock()">
+                        Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Galería (Premium View) -->
+    <div class="modal fade" id="modalGaleriaStock" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 overflow-hidden premium-shadow bg-dark text-white">
+                <div class="modal-header border-0 position-absolute w-100" style="z-index: 10; background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);">
+                    <h5 class="modal-title fw-bold" id="galeriaTitulo">Producto</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="carouselGaleria" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner" id="carouselInnerStock">
+                            <!-- Imágenes por JS -->
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselGaleria" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carouselGaleria" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

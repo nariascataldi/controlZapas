@@ -11,7 +11,10 @@ function getToken() {
 }
 
 function getUser() {
-    return JSON.parse(localStorage.getItem('cz_user'));
+    try {
+        const u = localStorage.getItem('cz_user');
+        return u ? JSON.parse(u) : {};
+    } catch (e) { return {}; }
 }
 
 async function fetchAPI(endpoint, options = {}) {
@@ -114,48 +117,7 @@ if (window.location.pathname.endsWith('login.html')) {
     }
 }
 
-// 2. DASHBOARD
-async function cargarDashboard() {
-    if (!window.location.pathname.endsWith('dashboard.html')) return;
-    try {
-        const data = await fetchAPI('/ventas/dashboard');
-        if (data) {
-            document.getElementById('widgetTotalVentas').textContent = formatCurrency(data.ventas_totales || 0);
-            document.getElementById('widgetUnidades').textContent = data.unidades_vendidas || 0;
-            document.getElementById('widgetStockCritico').textContent = data.stock_critico || 0;
-        }
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-async function cargarHistorialAdmin() {
-    if (!window.location.pathname.endsWith('dashboard.html')) return;
-    try {
-        const data = await fetchAPI('/ventas');
-        const tbody = document.getElementById('historialVentasBo');
-        if (data && tbody) {
-            tbody.innerHTML = '';
-            // Mostrar últimos 10
-            data.slice(0, 10).forEach(v => {
-                const date = new Date(v.fecha).toLocaleString('es-UY');
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="text-muted fw-bold">#${v.id}</td>
-                        <td>${date}</td>
-                        <td class="fw-medium">${v.cliente}</td>
-                        <td><span class="badge bg-light text-dark">${v.vendedor}</span></td>
-                        <td class="text-end fw-bold text-success">${formatCurrency(v.total)}</td>
-                        <td class="text-end text-muted small">${formatCurrency(v.comision_calculada)}</td>
-                    </tr>
-                `;
-            });
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Aún no hay ventas registradas</td></tr>';
-            }
-        }
-    } catch (e) { console.error(e); }
-}
+// 3. INVENTARIO / STOCK
 
 // 3. INVENTARIO / STOCK
 let inventarioGlobal = [];
@@ -194,39 +156,108 @@ function renderStock(lista = inventarioGlobal) {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    const userRole = getUser().rol;
+    const user = getUser();
+    const isAdmin = user && user.rol && user.rol.toUpperCase() === 'ADMIN';
 
     lista.forEach(item => {
-        const pMostrar = userRole === 'ADMIN' ?
-            `Max: ${formatCurrency(item.precio_mayorista)}<br><small class="text-muted">Min: ${formatCurrency(item.precio_minorista)}</small>` :
-            `${formatCurrency(item.precio_minorista)}`;
+        const pMostrar = isAdmin ?
+            `<div class="fw-bold text-dark">${formatCurrency(item.precio_mayorista)}</div><div class="small text-muted">${formatCurrency(item.precio_minorista)} min</div>` :
+            `<div class="fw-bold text-dark">${formatCurrency(item.precio_minorista)}</div>`;
 
         // Si no hay variante (producto sin hijos aún), omitimos pintar filas de data o la pintamos vacía
         if (!item.sku) return;
 
+        const isLowStock = item.stock_actual <= (item.stock_minimo || 2);
+        const disableClass = item.stock_actual <= 0 ? 'opacity-50' : '';
+        
+        let stockBadge = '';
+        if (item.stock_actual <= 0) {
+            stockBadge = `<div class="d-flex flex-column align-items-center"><span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1 fw-bold">Agotado</span></div>`;
+        } else if (isLowStock) {
+            stockBadge = `<div class="d-flex flex-column align-items-center gap-1">
+                            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1 fw-bold">${item.stock_actual} Unids.</span>
+                            <span class="text-danger fw-bolder" style="font-size: 0.6rem; letter-spacing: 0.5px; text-transform: uppercase;">Stock Bajo</span>
+                          </div>`;
+        } else {
+            stockBadge = `<div class="d-flex justify-content-center"><span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1 fw-bold">${item.stock_actual} Unids.</span></div>`;
+        }
+
+        const itemJson = JSON.stringify(item).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        
         tbody.innerHTML += `
-            <tr>
-                <td>
-                    <div class="fw-bold color-dark">${item.nombre}</div>
-                    <div class="small text-muted">${item.marca || 'Sin marca'}</div>
+            <tr class="align-middle border-bottom border-light hover-bg-light transition-all ${disableClass}">
+                <td class="py-3 ps-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stock-thumb bg-white rounded-3 shadow-sm border p-1" style="width: 50px; height: 50px; flex-shrink: 0;" data-item="${itemJson}">
+                            <div class="w-100 h-100 bg-light rounded-2 d-flex align-items-center justify-content-center text-muted">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="fw-bold text-dark d-block mb-1" style="font-size: 0.95rem;">${item.nombre}</span>
+                            <span class="text-muted fw-medium" style="font-size: 0.8rem;">${item.marca || 'Sin marca'}</span>
+                        </div>
+                    </div>
                 </td>
-                <td><span class="badge bg-light text-dark me-2">${item.color || 'N/A'}</span> <span class="badge bg-secondary">${item.talla}</span></td>
-                <td class="fw-medium font-monospace small">${item.sku}</td>
-                <td>${pMostrar}</td>
-                <td><span class="badge rounded-pill ${bgAlert(item.stock_actual, item.stock_minimo)} px-3 py-2">${item.stock_actual} unid.</span></td>
-                <td class="text-end">
-                    <button class="btn btn-sm btn-outline-success border-2 rounded-3" onclick='generarLinkWhatsapp(${JSON.stringify(item)})' title="WhatsApp Disp.">
-                        <i class="bi bi-whatsapp"></i> WA
-                    </button>
-                    ${userRole === 'ADMIN' ? `
-                    <button class="btn btn-sm btn-outline-primary border-2 rounded-3 ms-1" onclick="promptAjustarStock(${item.variante_id}, '${item.stock_actual}')" title="Ajustar Stock">
-                        <i class="bi bi-box-seam"></i>
-                    </button>
-                    ` : ''}
+                <td class="py-3">
+                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                        <span class="badge bg-light text-dark border"><i class="bi bi-circle-fill text-secondary me-1" style="font-size:0.5rem"></i>${item.color || '-'}</span>
+                        <span class="badge bg-secondary text-white rounded-pill">Talla ${item.talla}</span>
+                    </div>
+                </td>
+                <td class="py-3 font-monospace text-muted small tracking-tight">
+                    ${item.sku}
+                </td>
+                <td class="py-3">
+                    ${pMostrar}
+                </td>
+                <td class="py-3 text-center">
+                    ${stockBadge}
+                </td>
+                <td class="py-3 text-end pe-3">
+                    <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-light text-dark border-0 px-2 rounded-pill" title="Ver Galería" onclick="verGaleriaStock(${item.producto_id}, '${item.nombre.replace(/'/g, "\\'")}')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        ${isLowStock ? `<button class="btn btn-sm btn-light text-success border-0 px-2 rounded-pill" title="Solicitar Proveedor" onclick="event.stopPropagation(); window.open('https://wa.me/?text=Necesitamos%20reposición%20del%20SKU%20${item.sku}')"><i class="bi bi-whatsapp"></i></button>` : ''}
+                        ${isAdmin ? `
+                            <button class="btn btn-sm btn-light text-primary border-0 px-2 rounded-pill" title="Ajustar Stock" onclick="abrirModalAjustarStock(${item.variante_id}, ${item.stock_actual})">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-light text-danger border-0 px-2 rounded-pill" title="Eliminar Variante" onclick="eliminarVariante(${item.variante_id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        ` : ''}
+                    </div>
                 </td>
             </tr>
         `;
     });
+
+    cargarThumbsStock(lista);
+}
+
+async function cargarThumbsStock(lista) {
+    const pids = [...new Set(lista.map(i => i.producto_id))];
+    for (let pid of pids) {
+        try {
+            const imgs = await fetchAPI('/productos/' + pid + '/imagenes');
+            if (imgs && imgs.length > 0) {
+                const principal = imgs[0];
+                const thumbs = document.querySelectorAll('.stock-thumb');
+                thumbs.forEach(thumb => {
+                    try {
+                        const cardItem = JSON.parse(thumb.dataset.item ? thumb.dataset.item.replace(/&quot;/g, '"') : '{}');
+                        if (cardItem.producto_id === pid) {
+                            thumb.innerHTML = '<img src="' + API_URL.replace('/api', '') + principal.ruta + '" alt="thumb" class="rounded-2" style="width:100%;height:100%;object-fit:cover;">';
+                        }
+                    } catch (e) {
+                         console.error(e);
+                    }
+                });
+            }
+        } catch (e) { console.error('Error cargando thumb:', e); }
+    }
 }
 
 function filtrarStock() {
@@ -413,13 +444,77 @@ async function subirImagenesAlProducto(productoId) {
     }
 }
 
-async function promptAjustarStock(varId, stockActual) {
-    const nuevoStock = prompt('Ingresa la nueva cantidad en inventario:', stockActual);
-    if (nuevoStock !== null && !isNaN(nuevoStock)) {
+function abrirModalAjustarStock(varId, stockActual) {
+    document.getElementById('ajustarVarId').value = varId;
+    document.getElementById('ajustarStockNum').value = stockActual;
+    const modal = new bootstrap.Modal(document.getElementById('modalAjustarStock'));
+    modal.show();
+}
+
+async function confirmarAjustarStock() {
+    const varId = document.getElementById('ajustarVarId').value;
+    const nuevoStock = document.getElementById('ajustarStockNum').value;
+    
+    try {
+        await fetchAPI(`/productos/variantes/${varId}/stock`, { 
+            method: 'PUT', 
+            body: JSON.stringify({ stock_actual: parseInt(nuevoStock) }) 
+        });
+        
+        // Cerrar modal
+        const modalEl = document.getElementById('modalAjustarStock');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        
+        cargarInventario(); // Recargar tabla
+    } catch (e) { 
+        alert('Error: ' + e.message); 
+    }
+}
+
+async function verGaleriaStock(prodId, nombre) {
+    try {
+        const imgs = await fetchAPI(`/productos/${prodId}/imagenes`);
+        const inner = document.getElementById('carouselInnerStock');
+        const titulo = document.getElementById('galeriaTitulo');
+        
+        titulo.textContent = nombre;
+        inner.innerHTML = '';
+        
+        if (!imgs || imgs.length === 0) {
+            inner.innerHTML = `
+                <div class="carousel-item active">
+                    <div class="d-flex align-items-center justify-content-center bg-dark" style="height: 400px;">
+                        <div class="text-center">
+                            <i class="bi bi-image text-white-50" style="font-size: 4rem;"></i>
+                            <p class="mt-2 text-white-50">Sin imágenes disponibles</p>
+                        </div>
+                    </div>
+                </div>`;
+        } else {
+            imgs.forEach((img, idx) => {
+                inner.innerHTML += `
+                    <div class="carousel-item ${idx === 0 ? 'active' : ''}">
+                        <img src="${API_URL.replace('/api', '')}${img.ruta}" class="d-block w-100" style="height: 400px; object-fit: contain; background: #000;">
+                    </div>`;
+            });
+        }
+        
+        const modal = new bootstrap.Modal(document.getElementById('modalGaleriaStock'));
+        modal.show();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function eliminarVariante(id) {
+    if (confirm('¿Estás seguro de eliminar esta variante (talla/color)? Esta acción no se puede deshacer.')) {
         try {
-            await fetchAPI(`/productos/variantes/${varId}/stock`, { method: 'PUT', body: JSON.stringify({ stock_actual: parseInt(nuevoStock) }) });
-            cargarInventario(); // refetch
-        } catch (e) { alert(e.message); }
+            await fetchAPI(`/productos/variantes/${id}`, { method: 'DELETE' });
+            cargarInventario();
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
     }
 }
 
@@ -475,7 +570,7 @@ async function buscarPos(fueEnter = false) {
             container.innerHTML += `
                 <div class="col-12 col-md-6">
                     <div class="product-card-pos d-flex align-items-center gap-3 ${disable ? 'opacity-50' : ''}" 
-                         ${disable ? '' : `onclick="agregarAlCarrito(JSON.parse(this.dataset.item))" data-item="${itemJson}"`}>
+                         data-item="${itemJson}" ${disable ? '' : `onclick="agregarAlCarrito(buscarPosResults.find(i => i.variante_id === ${item.variante_id}))"`}>
                         <div class="product-thumb">
                             <i class="bi bi-box-seam"></i>
                         </div>
@@ -514,15 +609,18 @@ async function cargarThumbsProductos(items) {
                 const cards = document.querySelectorAll('.product-card-pos');
                 cards.forEach(card => {
                     try {
-                        const cardItem = JSON.parse(card.dataset.item || '{}');
+                        const parsedData = card.dataset.item ? card.dataset.item.replace(/&quot;/g, '"') : '{}';
+                        const cardItem = JSON.parse(parsedData);
                         if (cardItem.producto_id === pid) {
                             const thumb = card.querySelector('.product-thumb');
-                            if (thumb) thumb.innerHTML = `<img src="${API_URL.replace('/api', '')}${principal.ruta}" alt="thumb">`;
+                            if (thumb) thumb.innerHTML = `<img src="${API_URL.replace('/api', '')}${principal.ruta}" alt="thumb" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
                         }
-                    } catch (e) { }
+                    } catch (e) {
+                        console.error("Error parseando data-item", e);
+                    }
                 });
             }
-        } catch (e) { }
+        } catch (e) { console.error("Error fetching img", e); }
     }
 }
 

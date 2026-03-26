@@ -60,11 +60,20 @@ router.put('/variantes/:id/stock', verificarToken, soloAdmin, (req, res) => {
     );
 });
 
+// Eliminar una variante (Solo admin)
+router.delete('/variantes/:id', verificarToken, soloAdmin, (req, res) => {
+    const varianteId = req.params.id;
+    db.run(`DELETE FROM variantes WHERE id = ?`, [varianteId], function(err) {
+        if (err) return res.status(500).json({ error: 'Error al eliminar variante' });
+        res.json({ mensaje: 'Variante eliminada correctamente' });
+    });
+});
+
 // Búsqueda de productos por texto, talla (disponible para todos los roles)
 router.get('/buscar', verificarToken, (req, res) => {
     const q = req.query.q ? `%${req.query.q}%` : '%';
     const query = `
-        SELECT p.nombre, p.marca, p.precio_mayorista, p.precio_minorista,
+        SELECT p.id as producto_id, p.nombre, p.marca, p.precio_mayorista, p.precio_minorista,
                v.id as variante_id, v.sku, v.color, v.talla, v.stock_actual
         FROM productos p
         JOIN variantes v ON p.id = v.producto_id
@@ -73,6 +82,25 @@ router.get('/buscar', verificarToken, (req, res) => {
     
     db.all(query, [q, q, q], (err, rows) => {
         if (err) return res.status(500).json({ error: 'Error en la búsqueda' });
+        res.json(rows);
+    });
+});
+
+// Obtener un producto específico por ID
+router.get('/:id', verificarToken, (req, res) => {
+    const productId = req.params.id;
+    db.get(`SELECT * FROM productos WHERE id = ?`, [productId], (err, row) => {
+        if (err) return res.status(500).json({ error: 'Error al obtener producto' });
+        if (!row) return res.status(404).json({ error: 'Producto no encontrado' });
+        res.json(row);
+    });
+});
+
+// Obtener imágenes de un producto
+router.get('/:id/imagenes', verificarToken, (req, res) => {
+    const productId = req.params.id;
+    db.all(`SELECT * FROM producto_imagenes WHERE producto_id = ?`, [productId], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Error al obtener imágenes' });
         res.json(rows);
     });
 });
