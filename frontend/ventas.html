@@ -231,34 +231,23 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="app.js"></script>
+    <script type="module" src="js/main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            verificarAcceso();
-            configurarNavBar();
-            buscarPos(); // Carga inicial vacía
-            
-            // Listener al presionar Enter en buscador (ideal para lector de barras)
             const inputEscanner = document.getElementById('posBuscador');
-            inputEscanner.addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') { 
-                    buscarPos(true); // true indica que fue por Enter / escaneo
-                }
-            });
-            // Autoenfocar escáner al iniciar
-            inputEscanner.focus();
+            if (inputEscanner) {
+                inputEscanner.focus();
+            }
         });
 
-        // Pill Switch Handler
         function cambiarTipoPrecio(btn) {
             document.querySelectorAll('.pill-switch .pill-option').forEach(p => p.classList.remove('active'));
             btn.classList.add('active');
-            // Sincronizar con el radio viejo para compatibilidad con app.js
             const tipo = btn.dataset.tipo;
             const radioId = tipo === 'mayorista' ? 'precioMay' : 'precioMin';
             const radio = document.getElementById(radioId);
             if (radio) radio.checked = true;
-            actualizarCarrito();
+            if (window.actualizarCarrito) window.actualizarCarrito();
         }
     </script>
     
