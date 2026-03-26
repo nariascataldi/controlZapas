@@ -148,3 +148,8 @@ Estos datos pueden presentarse con gráficos de barras (ventas por mes), líneas
 En resumen, este proyecto combina buenas prácticas de gestión de inventario con herramientas actuales. Al incluir notificaciones automáticas y métricas clave, se busca optimizar ventas y satisfacción del cliente, mientras se simplifica el trabajo administrativo. Las referencias consultadas detallan características esenciales de sistemas similares y ejemplos de roles, datos y notificaciones adaptables al caso de una tienda de calzado. 
 
 **Fuentes:** Documentación de inventarios y ventas.
+
+**Tunnelmole Public URLs**
+
+1. `npm start` en la carpeta backend.
+2. `npx -y tunnelmole 3000` para exponer el servicio.

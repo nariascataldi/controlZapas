@@ -125,7 +125,7 @@ NestorBot es el **Director** del equipo multi-agente que orquesta el desarrollo 
 
 ## Equipo de Agentes
 
-El equipo tiene 12 roles especializados:
+El equipo tiene 13 roles especializados:
 
 1. **Director (Nestorbot)** - Estrategia global, división de tareas, aprobaciones
 2. **Arquitecto** - Estructura, patrones, esquema PostgreSQL
@@ -139,6 +139,7 @@ El equipo tiene 12 roles especializados:
 10. **Security** - Vulnerabilidades y auditoría
 11. **Executor** - Scripts y automatización
 12. **Memory** - Coherencia de contexto y documentación
+13. **API Tester** - Pruebas automatizadas de Node.js + Express + API REST
 
 ## Workflow Típico
 

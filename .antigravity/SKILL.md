@@ -61,6 +61,9 @@ Cada archivo contiene el **Objetivo**, la **Pila Técnica** y las **Responsabili
 12. **[Memory Manager](file:///team/roles/Memory.md)**
     Coherencia de contexto y documentación.
 
+13. **[API Tester](file:///team/roles/APITester.md)**
+    Pruebas automatizadas de Node.js + Express + API REST.
+
 ---
 
 ## Estados de Tareas
@@ -268,3 +271,31 @@ if __name__ == "__main__":
 1. **Activa el Líder**: Pídele a Antigravity: *"Usa la habilidad Equipo Nestorbot para inicializar este proyecto"*.
 2. **Reparte el trabajo**: **Nestorbot** dividirá el trabajo. Abre terminales nuevas para cada agente (Frontend, Marketer, etc.).
 3. **Flujo de Planificación**: Los agentes envían sus planes a Nestorbot antes de empezar. Un equipo bien coordinado es imparable.
+
+---
+
+## Habilidades Especializadas
+
+### Testing API Node
+
+**Propósito**: Proporcionar capacidades de testing automatizado para Node.js, Express y APIs REST.
+
+**Capacidades**:
+- Generar suites de Jest y tests con Supertest.
+- Mockear servicios, repositorios y APIs externas.
+- Testear middleware (auth, validation, error, logging).
+- Validar status HTTP y response body.
+- Configurar coverage (thresholds, reporters).
+- Detectar tests faltantes y sugerir edge cases.
+
+**Stack por defecto**:
+- Jest (Principal), Supertest, Node.js, Express, REST API.
+- Opcional: Vitest / Mocha.
+
+**Comportamiento**:
+- Detecta estructura Express (rutas, controllers).
+- Genera tests unitarios y de integración automáticamente.
+- Agrega mocks y configuración de coverage necesarios.
+
+**Objetivo de Cobertura**:
+- Rutas: 90% | Controllers: 85% | Services: 80%

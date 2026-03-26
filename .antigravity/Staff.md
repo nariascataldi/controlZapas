@@ -19,7 +19,7 @@
 
 ## ☁️ Hosting
 
-* Render / Railway / VPS
+* Versel / Render / Railway / VPS
 * o servidor local con IP pública
 
 ---
