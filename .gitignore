@@ -18,15 +18,15 @@ backend/database.db
 *.sqlite
 *.db
 
-# .antigravity team state (Locks, Logs and messages should not be commit to repo)
-.antigravity/team/locks/
-.antigravity/team/logs/
-.antigravity/team/mailbox/
-.antigravity/team/presence.json
-.antigravity/team/broadcast.msg
-.antigravity/team/decisions.log
-.antigravity/team/tasks.json
-! .antigravity/team/roles/
+# .antigravity team state
+.antigravity/
+
+# Agent files
+AGENT.md
+NESTORBOT_PROMPT.md
+
+# Documentation archive
+Docu.md
 # Testing
 backend/coverage/
 backend/*.txt
