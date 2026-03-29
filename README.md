@@ -50,14 +50,6 @@ gitGraph
     merge develop id: "release"
 ```
 
-## Ramas
-
-| Rama     | Propósito              | Protected |
-|----------|------------------------|-----------|
-| main     | Producción             | Sí        |
-| develop  | Integración de features| Sí        |
-| feature/*| Nuevas funcionalidades | No        |
-
 ## Roles
 
 | Rol        | Acceso | Funciones                              |
@@ -71,16 +63,6 @@ gitGraph
 npm install
 npm start
 ```
-
-## API Endpoints
-
-| Método | Endpoint           | Descripción              |
-|--------|-------------------|--------------------------|
-| GET    | /api/productos    | Listar productos         |
-| POST   | /api/productos    | Crear producto           |
-| GET    | /api/ventas       | Listar ventas            |
-| POST   | /api/ventas       | Registrar venta          |
-
 ## Ejecución Local
 
 1. `npm start` en la carpeta backend
