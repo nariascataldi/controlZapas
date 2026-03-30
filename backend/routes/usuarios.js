@@ -1,30 +1,35 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const db = require('../database');
+const prisma = require('../prisma');
 const { verificarToken, soloAdmin } = require('./auth');
 
-// ─── CRUD DE VENDEDORES (Solo Admin) ───
-
-// Listar todos los usuarios (vendedores y admins)
-router.get('/', verificarToken, soloAdmin, (req, res) => {
-    db.all(`SELECT id, nombre, rol, porcentaje_comision FROM usuarios ORDER BY rol, nombre`, [], (err, rows) => {
-        if (err) return res.status(500).json({ error: 'Error obteniendo usuarios' });
-        res.json(rows);
-    });
+router.get('/', verificarToken, soloAdmin, async (req, res) => {
+    try {
+        const usuarios = await prisma.usuario.findMany({
+            select: { id: true, nombre: true, rol: true, porcentajeComision: true }
+        });
+        res.json(usuarios);
+    } catch (err) {
+        return res.status(500).json({ error: 'Error obteniendo usuarios' });
+    }
 });
 
-// Obtener un usuario por ID
-router.get('/:id', verificarToken, soloAdmin, (req, res) => {
-    db.get(`SELECT id, nombre, rol, porcentaje_comision FROM usuarios WHERE id = ?`, [req.params.id], (err, row) => {
-        if (err) return res.status(500).json({ error: 'Error obteniendo usuario' });
-        if (!row) return res.status(404).json({ error: 'Usuario no encontrado' });
-        res.json(row);
-    });
+router.get('/:id', verificarToken, soloAdmin, async (req, res) => {
+    const userId = parseInt(req.params.id);
+    try {
+        const usuario = await prisma.usuario.findUnique({
+            where: { id: userId },
+            select: { id: true, nombre: true, rol: true, porcentajeComision: true }
+        });
+        if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+        res.json(usuario);
+    } catch (err) {
+        return res.status(500).json({ error: 'Error obteniendo usuario' });
+    }
 });
 
-// Crear un nuevo vendedor
-router.post('/', verificarToken, soloAdmin, (req, res) => {
+router.post('/', verificarToken, soloAdmin, async (req, res) => {
     const { nombre, password, rol, porcentaje_comision } = req.body;
 
     if (!nombre || !password) {
@@ -33,159 +38,170 @@ router.post('/', verificarToken, soloAdmin, (req, res) => {
 
     const rolFinal = rol || 'VENDEDOR';
     const comision = porcentaje_comision || 0;
-
     const hash = bcrypt.hashSync(password, 10);
 
-    db.run(
-        `INSERT INTO usuarios (nombre, password_hash, rol, porcentaje_comision) VALUES (?, ?, ?, ?)`,
-        [nombre, hash, rolFinal, comision],
-        function (err) {
-            if (err) {
-                if (err.message.includes('UNIQUE constraint')) {
-                    return res.status(409).json({ error: 'Ya existe un usuario con ese nombre' });
-                }
-                return res.status(500).json({ error: 'Error creando usuario' });
+    try {
+        const usuario = await prisma.usuario.create({
+            data: {
+                nombre,
+                passwordHash: hash,
+                rol: rolFinal,
+                porcentajeComision: comision
             }
-            res.status(201).json({ id: this.lastID, nombre, rol: rolFinal, porcentaje_comision: comision });
+        });
+        res.status(201).json({ id: usuario.id, nombre, rol: rolFinal, porcentaje_comision: comision });
+    } catch (err) {
+        if (err.code === 'P2002') {
+            return res.status(409).json({ error: 'Ya existe un usuario con ese nombre' });
         }
-    );
+        return res.status(500).json({ error: 'Error creando usuario' });
+    }
 });
 
-// Actualizar un usuario (nombre, rol, comisión, y opcionalmente contraseña)
-router.put('/:id', verificarToken, soloAdmin, (req, res) => {
+router.put('/:id', verificarToken, soloAdmin, async (req, res) => {
     const { nombre, password, rol, porcentaje_comision } = req.body;
-    const userId = req.params.id;
+    const userId = parseInt(req.params.id);
 
-    // Primero verificar que existe
-    db.get(`SELECT id FROM usuarios WHERE id = ?`, [userId], (err, row) => {
-        if (err) return res.status(500).json({ error: 'Error en base de datos' });
-        if (!row) return res.status(404).json({ error: 'Usuario no encontrado' });
+    try {
+        const existing = await prisma.usuario.findUnique({ where: { id: userId } });
+        if (!existing) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-        let query = `UPDATE usuarios SET nombre = ?, rol = ?, porcentaje_comision = ?`;
-        let params = [nombre, rol, porcentaje_comision];
+        const data = {
+            nombre,
+            rol,
+            porcentajeComision: porcentaje_comision
+        };
 
         if (password && password.trim() !== '') {
-            const hash = bcrypt.hashSync(password, 10);
-            query += `, password_hash = ?`;
-            params.push(hash);
+            data.passwordHash = bcrypt.hashSync(password, 10);
         }
 
-        query += ` WHERE id = ?`;
-        params.push(userId);
-
-        db.run(query, params, function (err) {
-            if (err) {
-                if (err.message.includes('UNIQUE constraint')) {
-                    return res.status(409).json({ error: 'Ya existe un usuario con ese nombre' });
-                }
-                return res.status(500).json({ error: 'Error actualizando usuario' });
-            }
-            res.json({ mensaje: 'Usuario actualizado', changes: this.changes });
+        await prisma.usuario.update({
+            where: { id: userId },
+            data
         });
-    });
+        res.json({ mensaje: 'Usuario actualizado' });
+    } catch (err) {
+        if (err.code === 'P2002') {
+            return res.status(409).json({ error: 'Ya existe un usuario con ese nombre' });
+        }
+        return res.status(500).json({ error: 'Error actualizando usuario' });
+    }
 });
 
-// Eliminar un usuario
-router.delete('/:id', verificarToken, soloAdmin, (req, res) => {
-    const userId = req.params.id;
+router.delete('/:id', verificarToken, soloAdmin, async (req, res) => {
+    const userId = parseInt(req.params.id);
 
-    // No permitir eliminar el propio usuario
-    if (parseInt(userId) === req.user.id) {
+    if (userId === req.user.id) {
         return res.status(400).json({ error: 'No puedes eliminar tu propio usuario' });
     }
 
-    db.run(`DELETE FROM usuarios WHERE id = ?`, [userId], function (err) {
-        if (err) return res.status(500).json({ error: 'Error eliminando usuario' });
-        if (this.changes === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+    try {
+        await prisma.usuario.delete({ where: { id: userId } });
         res.json({ mensaje: 'Usuario eliminado' });
-    });
+    } catch (err) {
+        return res.status(500).json({ error: 'Error eliminando usuario' });
+    }
 });
 
-
-// ─── HISTORIAL Y COMISIONES ───
-
-// Historial de ventas de un vendedor específico (Admin)
-router.get('/:id/ventas', verificarToken, soloAdmin, (req, res) => {
-    const query = `
-        SELECT v.id, v.fecha, v.total, v.comision_calculada, c.nombre as cliente
-        FROM ventas v
-        LEFT JOIN clientes c ON v.cliente_id = c.id
-        WHERE v.vendedor_id = ?
-        ORDER BY v.fecha DESC
-    `;
-    db.all(query, [req.params.id], (err, rows) => {
-        if (err) return res.status(500).json({ error: 'Error obteniendo historial del vendedor' });
-        res.json(rows);
-    });
+router.get('/:id/ventas', verificarToken, soloAdmin, async (req, res) => {
+    const userId = parseInt(req.params.id);
+    try {
+        const ventas = await prisma.venta.findMany({
+            where: { vendedorId: userId },
+            include: { cliente: true },
+            orderBy: { fecha: 'desc' }
+        });
+        res.json(ventas.map(v => ({
+            id: v.id,
+            fecha: v.fecha,
+            total: v.total,
+            comision_calculada: v.comisionCalculada,
+            cliente: v.cliente?.nombre || null
+        })));
+    } catch (err) {
+        return res.status(500).json({ error: 'Error obteniendo historial del vendedor' });
+    }
 });
 
-// Resumen de comisiones de un vendedor
-router.get('/:id/comisiones', verificarToken, soloAdmin, (req, res) => {
-    const query = `
-        SELECT 
-            u.nombre as vendedor,
-            u.porcentaje_comision,
-            COUNT(v.id) as total_ventas,
-            COALESCE(SUM(v.total), 0) as monto_total_vendido,
-            COALESCE(SUM(v.comision_calculada), 0) as comision_total_acumulada
-        FROM usuarios u
-        LEFT JOIN ventas v ON v.vendedor_id = u.id
-        WHERE u.id = ?
-        GROUP BY u.id
-    `;
-    db.get(query, [req.params.id], (err, row) => {
-        if (err) return res.status(500).json({ error: 'Error obteniendo comisiones' });
-        if (!row) return res.status(404).json({ error: 'Vendedor no encontrado' });
-        res.json(row);
-    });
+router.get('/:id/comisiones', verificarToken, soloAdmin, async (req, res) => {
+    const userId = parseInt(req.params.id);
+    try {
+        const usuario = await prisma.usuario.findUnique({
+            where: { id: userId },
+            include: {
+                ventas: true
+            }
+        });
+        if (!usuario) return res.status(404).json({ error: 'Vendedor no encontrado' });
+
+        const totalVentas = usuario.ventas.length;
+        const montoTotal = usuario.ventas.reduce((sum, v) => sum + v.total, 0);
+        const comisionTotal = usuario.ventas.reduce((sum, v) => sum + v.comisionCalculada, 0);
+
+        res.json({
+            vendedor: usuario.nombre,
+            porcentaje_comision: usuario.porcentajeComision,
+            total_ventas: totalVentas,
+            monto_total_vendido: montoTotal,
+            comision_total_acumulada: comisionTotal
+        });
+    } catch (err) {
+        return res.status(500).json({ error: 'Error obteniendo comisiones' });
+    }
 });
 
-// Resumen global de comisiones de todos los vendedores (Admin Dashboard)
-router.get('/reportes/comisiones', verificarToken, soloAdmin, (req, res) => {
-    const query = `
-        SELECT 
-            u.id,
-            u.nombre as vendedor,
-            u.porcentaje_comision,
-            COUNT(v.id) as total_ventas,
-            COALESCE(SUM(v.total), 0) as monto_total_vendido,
-            COALESCE(SUM(v.comision_calculada), 0) as comision_acumulada
-        FROM usuarios u
-        LEFT JOIN ventas v ON v.vendedor_id = u.id
-        WHERE u.rol = 'VENDEDOR'
-        GROUP BY u.id
-        ORDER BY comision_acumulada DESC
-    `;
-    db.all(query, [], (err, rows) => {
-        if (err) return res.status(500).json({ error: 'Error obteniendo reporte de comisiones' });
-        res.json(rows);
-    });
+router.get('/reportes/comisiones', verificarToken, soloAdmin, async (req, res) => {
+    try {
+        const usuarios = await prisma.usuario.findMany({
+            where: { rol: 'VENDEDOR' },
+            include: { ventas: true }
+        });
+
+        const result = usuarios.map(u => ({
+            id: u.id,
+            vendedor: u.nombre,
+            porcentaje_comision: u.porcentajeComision,
+            total_ventas: u.ventas.length,
+            monto_total_vendido: u.ventas.reduce((sum, v) => sum + v.total, 0),
+            comision_acumulada: u.ventas.reduce((sum, v) => sum + v.comisionCalculada, 0)
+        }));
+
+        result.sort((a, b) => b.comision_acumulada - a.comision_acumulada);
+        res.json(result);
+    } catch (err) {
+        return res.status(500).json({ error: 'Error obteniendo reporte de comisiones' });
+    }
 });
 
-
-// ─── HISTORIAL POR CLIENTE ───
-
-// Listar todos los clientes
-router.get('/clientes/todos', verificarToken, (req, res) => {
-    db.all(`SELECT id, nombre, contacto FROM clientes ORDER BY nombre`, [], (err, rows) => {
-        if (err) return res.status(500).json({ error: 'Error obteniendo clientes' });
-        res.json(rows);
-    });
+router.get('/clientes/todos', verificarToken, async (req, res) => {
+    try {
+        const clientes = await prisma.cliente.findMany({
+            orderBy: { nombre: 'asc' }
+        });
+        res.json(clientes);
+    } catch (err) {
+        return res.status(500).json({ error: 'Error obteniendo clientes' });
+    }
 });
 
-// Historial de ventas de un cliente específico
-router.get('/clientes/:id/ventas', verificarToken, (req, res) => {
-    const query = `
-        SELECT v.id, v.fecha, v.total, u.nombre as vendedor
-        FROM ventas v
-        JOIN usuarios u ON v.vendedor_id = u.id
-        WHERE v.cliente_id = ?
-        ORDER BY v.fecha DESC
-    `;
-    db.all(query, [req.params.id], (err, rows) => {
-        if (err) return res.status(500).json({ error: 'Error obteniendo historial del cliente' });
-        res.json(rows);
-    });
+router.get('/clientes/:id/ventas', verificarToken, async (req, res) => {
+    const clienteId = parseInt(req.params.id);
+    try {
+        const ventas = await prisma.venta.findMany({
+            where: { clienteId },
+            include: { vendedor: { select: { nombre: true } } },
+            orderBy: { fecha: 'desc' }
+        });
+        res.json(ventas.map(v => ({
+            id: v.id,
+            fecha: v.fecha,
+            total: v.total,
+            vendedor: v.vendedor.nombre
+        })));
+    } catch (err) {
+        return res.status(500).json({ error: 'Error obteniendo historial del cliente' });
+    }
 });
 
 module.exports = router;

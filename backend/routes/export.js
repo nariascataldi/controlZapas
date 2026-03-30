@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database');
+const prisma = require('../prisma');
 const { verificarToken } = require('./auth');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
@@ -8,86 +8,71 @@ const PDFDocument = require('pdfkit');
 async function getFilteredSales(user, filters) {
     const { cliente, producto, sale_id, desde, hasta, metodo_pago, estado, vendedor_id, ids } = filters;
     
-    let query = `
-        SELECT DISTINCT v.id, v.fecha, v.total, v.comision_calculada, v.metodo_pago, v.estado, 
-               c.nombre as cliente, u.nombre as vendedor,
-               (SELECT GROUP_CONCAT(p.nombre, ', ') 
-                FROM venta_detalles vd 
-                JOIN variantes var ON vd.variante_id = var.id 
-                JOIN productos p ON var.producto_id = p.id 
-                WHERE vd.venta_id = v.id) as productos,
-               (SELECT SUM(vd.cantidad) 
-                FROM venta_detalles vd 
-                WHERE vd.venta_id = v.id) as cantidad_total
-        FROM ventas v
-        JOIN clientes c ON v.cliente_id = c.id
-        JOIN usuarios u ON v.vendedor_id = u.id
-        LEFT JOIN venta_detalles vd ON v.id = vd.venta_id
-        LEFT JOIN variantes var ON vd.variante_id = var.id
-        LEFT JOIN productos p ON var.producto_id = p.id
-        WHERE 1=1
-    `;
-    let params = [];
+    const where = {};
 
     if (user.rol !== 'ADMIN') {
-        query += ` AND v.vendedor_id = ?`;
-        params.push(user.id);
+        where.vendedorId = user.id;
     } else if (vendedor_id) {
-        query += ` AND v.vendedor_id = ?`;
-        params.push(vendedor_id);
+        where.vendedorId = parseInt(vendedor_id);
     }
 
     if (ids) {
         const idArray = ids.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
         if (idArray.length > 0) {
-            query += ` AND v.id IN (${idArray.map(() => '?').join(',')})`;
-            params.push(...idArray);
+            where.id = { in: idArray };
         }
     }
 
     if (cliente) {
-        query += ` AND c.nombre LIKE ?`;
-        params.push(`%${cliente}%`);
-    }
-
-    if (producto) {
-        query += ` AND p.nombre LIKE ?`;
-        params.push(`%${producto}%`);
+        where.cliente = { nombre: { contains: cliente, mode: 'insensitive' } };
     }
 
     if (sale_id) {
-        query += ` AND v.id = ?`;
-        params.push(sale_id);
+        where.id = parseInt(sale_id);
     }
 
-    if (desde) {
-        query += ` AND v.fecha >= ?`;
-        params.push(desde);
-    }
-
-    if (hasta) {
-        query += ` AND v.fecha <= ?`;
-        params.push(hasta + ' 23:59:59');
+    if (desde || hasta) {
+        where.fecha = {};
+        if (desde) where.fecha.gte = new Date(desde);
+        if (hasta) where.fecha.lte = new Date(hasta + ' 23:59:59');
     }
 
     if (metodo_pago) {
-        query += ` AND v.metodo_pago = ?`;
-        params.push(metodo_pago);
+        where.metodoPago = metodo_pago;
     }
 
     if (estado) {
-        query += ` AND v.estado = ?`;
-        params.push(estado);
+        where.estado = estado;
     }
 
-    query += ` ORDER BY v.fecha DESC`;
-
-    return new Promise((resolve, reject) => {
-        db.all(query, params, (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-        });
+    const ventas = await prisma.venta.findMany({
+        where,
+        include: {
+            cliente: true,
+            vendedor: { select: { nombre: true } },
+            detalles: {
+                include: {
+                    variante: {
+                        include: { producto: true }
+                    }
+                }
+            }
+        },
+        orderBy: { fecha: 'desc' }
     });
+
+    return ventas.map(v => ({
+        id: v.id,
+        fecha: v.fecha,
+        total: v.total,
+        comision_calculada: v.comisionCalculada,
+        metodo_pago: v.metodoPago,
+        estado: v.estado,
+        cliente: v.cliente?.nombre,
+        vendedor: v.vendedor?.nombre,
+        productos: v.detalles.map(d => d.variante?.producto?.nombre).filter(Boolean).join(', '),
+        cantidad_total: v.detalles.reduce((sum, d) => sum + d.cantidad, 0)
+    }));
 }
 
 function formatDate(dateStr) {

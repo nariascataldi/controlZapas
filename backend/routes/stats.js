@@ -1,49 +1,32 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database');
+const prisma = require('../prisma');
 const { verificarToken, soloAdmin } = require('./auth');
 
-// Funciones helpers para ejecutar queries como promesas
-const runQuery = (query, params = []) => {
-    return new Promise((resolve, reject) => {
-        db.all(query, params, (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-        });
-    });
-};
-
-const getRow = (query, params = []) => {
-    return new Promise((resolve, reject) => {
-        db.get(query, params, (err, row) => {
-            if (err) reject(err);
-            else resolve(row);
-        });
-    });
-};
-
-// Dashboard KPIs (Admin)
 router.get('/kpis', verificarToken, soloAdmin, async (req, res) => {
     try {
-        const ventasMesTarget = await getRow(`
-            SELECT COALESCE(SUM(total), 0) as total 
-            FROM ventas 
-            WHERE strftime('%Y-%m', fecha) = strftime('%Y-%m', 'now')
-        `);
-        
-        const comisionesTarget = await getRow(`
-            SELECT COALESCE(SUM(comision_calculada), 0) as total 
-            FROM ventas 
-            WHERE strftime('%Y-%m', fecha) = strftime('%Y-%m', 'now')
-        `);
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        // Asumiendo que las ganancias para la tienda son el TOTAL vendido menos la comisión
-        const gananciasMes = ventasMesTarget.total - comisionesTarget.total;
+        const [ventasMes, comisiones] = await Promise.all([
+            prisma.venta.aggregate({
+                where: { fecha: { gte: startOfMonth } },
+                _sum: { total: true }
+            }),
+            prisma.venta.aggregate({
+                where: { fecha: { gte: startOfMonth } },
+                _sum: { comisionCalculada: true }
+            })
+        ]);
+
+        const ventasTotalesMes = ventasMes._sum.total || 0;
+        const comisionesPorPagar = comisiones._sum.comisionCalculada || 0;
+        const gananciasMes = ventasTotalesMes - comisionesPorPagar;
 
         res.json({
-            ventas_totales_mes: ventasMesTarget.total,
+            ventas_totales_mes: ventasTotalesMes,
             ganancias_netas_mes: gananciasMes,
-            comisiones_por_pagar: comisionesTarget.total
+            comisiones_por_pagar: comisionesPorPagar
         });
     } catch (error) {
         console.error('Error calculando KPIs:', error);
@@ -51,24 +34,23 @@ router.get('/kpis', verificarToken, soloAdmin, async (req, res) => {
     }
 });
 
-// Historial por Vendedor (Admin)
 router.get('/rendimiento-vendedores', verificarToken, soloAdmin, async (req, res) => {
     try {
-        const query = `
-            SELECT 
-                u.id, 
-                u.nombre, 
-                u.porcentaje_comision,
-                COUNT(v.id) as cantidad_ventas,
-                COALESCE(SUM(v.total), 0) as total_vendido,
-                COALESCE(SUM(v.comision_calculada), 0) as total_comisiones
-            FROM usuarios u
-            LEFT JOIN ventas v ON u.id = v.vendedor_id
-            WHERE u.rol = 'VENDEDOR'
-            GROUP BY u.id
-            ORDER BY total_vendido DESC
-        `;
-        const rendimiento = await runQuery(query);
+        const usuarios = await prisma.usuario.findMany({
+            where: { rol: 'VENDEDOR' },
+            include: { ventas: true }
+        });
+
+        const rendimiento = usuarios.map(u => ({
+            id: u.id,
+            nombre: u.nombre,
+            porcentaje_comision: u.porcentajeComision,
+            cantidad_ventas: u.ventas.length,
+            total_vendido: u.ventas.reduce((sum, v) => sum + v.total, 0),
+            total_comisiones: u.ventas.reduce((sum, v) => sum + v.comisionCalculada, 0)
+        }));
+
+        rendimiento.sort((a, b) => b.total_vendido - a.total_vendido);
         res.json(rendimiento);
     } catch (error) {
         console.error('Error obteniendo rendimiento de vendedores:', error);
@@ -76,23 +58,28 @@ router.get('/rendimiento-vendedores', verificarToken, soloAdmin, async (req, res
     }
 });
 
-// Historial por Cliente (Admin)
 router.get('/historial-clientes', verificarToken, soloAdmin, async (req, res) => {
     try {
-        const query = `
-            SELECT 
-                c.id, 
-                c.nombre, 
-                c.contacto,
-                COUNT(v.id) as cantidad_compras,
-                COALESCE(SUM(v.total), 0) as total_gastado,
-                MAX(v.fecha) as ultima_compra
-            FROM clientes c
-            JOIN ventas v ON c.id = v.cliente_id
-            GROUP BY c.id
-            ORDER BY total_gastado DESC
-        `;
-        const historial = await runQuery(query);
+        const clientes = await prisma.cliente.findMany({
+            include: {
+                ventas: {
+                    select: { total: true, fecha: true }
+                }
+            }
+        });
+
+        const historial = clientes
+            .filter(c => c.ventas.length > 0)
+            .map(c => ({
+                id: c.id,
+                nombre: c.nombre,
+                contacto: c.contacto,
+                cantidad_compras: c.ventas.length,
+                total_gastado: c.ventas.reduce((sum, v) => sum + v.total, 0),
+                ultima_compra: c.ventas.reduce((max, v) => v.fecha > max ? v.fecha : max, new Date(0))
+            }))
+            .sort((a, b) => b.total_gastado - a.total_gastado);
+
         res.json(historial);
     } catch (error) {
         console.error('Error obteniendo historial de clientes:', error);
@@ -100,23 +87,37 @@ router.get('/historial-clientes', verificarToken, soloAdmin, async (req, res) =>
     }
 });
 
-// Top Productos (Admin)
 router.get('/top-productos', verificarToken, soloAdmin, async (req, res) => {
     try {
-        const query = `
-            SELECT 
-                p.nombre, 
-                p.marca,
-                SUM(vd.cantidad) as unidades_vendidas,
-                SUM(vd.cantidad * vd.precio_unitario) as ingresos_generados
-            FROM venta_detalles vd
-            JOIN variantes v ON vd.variante_id = v.id
-            JOIN productos p ON v.producto_id = p.id
-            GROUP BY p.id
-            ORDER BY unidades_vendidas DESC
-            LIMIT 5
-        `;
-        const top = await runQuery(query);
+        const detalles = await prisma.ventaDetalle.findMany({
+            include: {
+                variante: {
+                    include: { producto: true }
+                }
+            }
+        });
+
+        const productosMap = {};
+        detalles.forEach(d => {
+            const prod = d.variante?.producto;
+            if (!prod) return;
+            
+            if (!productosMap[prod.id]) {
+                productosMap[prod.id] = {
+                    nombre: prod.nombre,
+                    marca: prod.marca,
+                    unidades_vendidas: 0,
+                    ingresos_generados: 0
+                };
+            }
+            productosMap[prod.id].unidades_vendidas += d.cantidad;
+            productosMap[prod.id].ingresos_generados += d.cantidad * d.precioUnitario;
+        });
+
+        const top = Object.values(productosMap)
+            .sort((a, b) => b.unidades_vendidas - a.unidades_vendidas)
+            .slice(0, 5);
+
         res.json(top);
     } catch (error) {
         console.error('Error obteniendo top productos:', error);

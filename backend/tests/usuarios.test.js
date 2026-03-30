@@ -1,22 +1,23 @@
 const request = require('supertest');
 const app = require('../server');
-const db = require('../database');
+const prisma = require('../prisma');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 describe('Users API Integration Tests', () => {
   let adminToken;
   let userId;
+  let adminId;
 
   beforeAll(async () => {
     await global.clearDatabase();
     
-    // Admin para ejecutar las peticiones
     const adminHash = bcrypt.hashSync('admin123', 10);
-    await new Promise((resolve) => {
-      db.run(`INSERT INTO usuarios (nombre, password_hash, rol) VALUES ('admin_crud', ?, 'ADMIN')`, [adminHash], resolve);
+    const admin = await prisma.usuario.create({
+      data: { nombre: 'admin_crud', passwordHash: adminHash, rol: 'ADMIN', porcentajeComision: 0 }
     });
-    adminToken = jwt.sign({ id: 1, nombre: 'admin_crud', rol: 'ADMIN' }, process.env.JWT_SECRET);
+    adminId = admin.id;
+    adminToken = jwt.sign({ id: admin.id, nombre: admin.nombre, rol: admin.rol, porcentajeComision: admin.porcentajeComision }, process.env.JWT_SECRET);
   });
 
   describe('POST /api/usuarios', () => {
@@ -81,7 +82,7 @@ describe('Users API Integration Tests', () => {
 
     test('Should not allow deleting self', async () => {
       const response = await request(app)
-        .delete('/api/usuarios/1')
+        .delete(`/api/usuarios/${adminId}`)
         .set('Authorization', `Bearer ${adminToken}`);
       expect(response.status).toBe(400);
     });

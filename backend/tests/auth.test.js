@@ -1,20 +1,20 @@
 const request = require('supertest');
 const app = require('../server');
-const db = require('../database');
+const prisma = require('../prisma');
 const bcrypt = require('bcrypt');
 
 describe('Auth API Integration Tests', () => {
   beforeEach(async () => {
     await global.clearDatabase();
     
-    // Crear un usuario de prueba
     const hash = bcrypt.hashSync('testpass', 10);
-    await new Promise((resolve) => {
-      db.run(
-        `INSERT INTO usuarios (nombre, password_hash, rol, porcentaje_comision) VALUES (?, ?, ?, ?)`,
-        ['testuser', hash, 'VENDEDOR', 5],
-        resolve
-      );
+    await prisma.usuario.create({
+      data: {
+        nombre: 'testuser',
+        passwordHash: hash,
+        rol: 'VENDEDOR',
+        porcentajeComision: 5
+      }
     });
   });
 
@@ -64,7 +64,6 @@ describe('Auth API Integration Tests', () => {
 
   describe('JWT Verification Middleware', () => {
     test('Should deny access without token', async () => {
-      // Usamos una ruta protegida cualquiera, por ejemplo GET /api/productos
       const response = await request(app).get('/api/productos');
       expect(response.status).toBe(403);
       expect(response.body.error).toBe('Token requerido');
