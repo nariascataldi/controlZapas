@@ -1,38 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { upload, deleteImage, getPublicIdFromUrl } = require('../services/cloudinary');
 const prisma = require('../prisma');
 const { verificarToken, soloAdmin } = require('./auth');
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const dir = path.join(__dirname, '..', 'uploads');
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        cb(null, dir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        cb(null, `prod-${req.params.id}-${uniqueSuffix}${ext}`);
-    }
-});
-
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Tipo de archivo no permitido. Solo JPEG, PNG, WebP y GIF.'), false);
-    }
-};
-
-const upload = multer({
-    storage,
-    fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 }
-});
 
 router.get('/:id/imagenes', verificarToken, async (req, res) => {
     const productoId = parseInt(req.params.id);
@@ -77,7 +47,8 @@ router.post('/:id/imagenes', verificarToken, soloAdmin, upload.array('imagenes',
                 data: {
                     productoId,
                     nombreArchivo: file.originalname,
-                    ruta: `/uploads/${file.filename}`,
+                    ruta: file.path,
+                    publicId: file.filename,
                     esPrincipal,
                     orden: orden + i
                 }
@@ -91,7 +62,7 @@ router.post('/:id/imagenes', verificarToken, soloAdmin, upload.array('imagenes',
         }
 
         res.status(201).json({
-            message: `${insertadas.length} imagen(es) subida(s)`,
+            message: `${insertadas.length} imagen(es) subida(s) a Cloudinary`,
             imagenes: insertadas
         });
     } catch (err) {
@@ -131,13 +102,12 @@ router.delete('/:id/imagenes/:imgId', verificarToken, soloAdmin, async (req, res
 
         if (!img) return res.status(404).json({ error: 'Imagen no encontrada' });
 
-        const filePath = path.join(__dirname, '..', img.ruta);
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
+        if (img.publicId) {
+            await deleteImage(img.publicId);
         }
 
         await prisma.productoImagen.delete({ where: { id: imgId } });
-        res.json({ message: 'Imagen eliminada' });
+        res.json({ message: 'Imagen eliminada de Cloudinary' });
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }

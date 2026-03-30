@@ -99,6 +99,7 @@ model ProductoImagen {
   productoId   Int      @map("producto_id")
   nombreArchivo String  @map("nombre_archivo")
   ruta         String
+  publicId    String?  @map("public_id")
   esPrincipal  Boolean  @default(false) @map("es_principal")
   orden        Int      @default(0)
   fechaSubida  DateTime @default(now()) @map("fecha_subida")

@@ -1,6 +1,6 @@
 import { fetchAPI, API_URL } from './api.js';
 import { getUser } from './auth.js';
-import { formatCurrency } from './utils.js';
+import { formatCurrency, getImageUrl } from './utils.js';
 
 let inventarioGlobal = [];
 let variantesTemporales = [];
@@ -130,7 +130,7 @@ export async function cargarThumbsStock(lista) {
                     try {
                         const cardItem = JSON.parse(thumb.dataset.item ? thumb.dataset.item.replace(/&quot;/g, '"') : '{}');
                         if (cardItem.producto_id === pid) {
-                            thumb.innerHTML = '<img src="' + API_URL.replace('/api', '') + principal.ruta + '" alt="thumb" class="rounded-2" style="width:100%;height:100%;object-fit:cover;">';
+                            thumb.innerHTML = '<img src="' + getImageUrl(principal.ruta, API_URL) + '" alt="thumb" class="rounded-2" style="width:100%;height:100%;object-fit:cover;">';
                         }
                     } catch (e) {
                          console.error(e);
@@ -332,7 +332,7 @@ export async function verGaleriaStock(prodId, nombre) {
             imgs.forEach((img, idx) => {
                 inner.innerHTML += `
                     <div class="carousel-item ${idx === 0 ? 'active' : ''}">
-                        <img src="${API_URL.replace('/api', '')}${img.ruta}" class="d-block w-100" style="height: 400px; object-fit: contain; background: #000;">
+                        <img src="${getImageUrl(img.ruta, API_URL)}" class="d-block w-100" style="height: 400px; object-fit: contain; background: #000;">
                     </div>`;
             });
         }
