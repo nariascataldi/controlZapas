@@ -1,6 +1,6 @@
 import { fetchAPI, API_URL } from './api.js';
 import { getUser } from './auth.js';
-import { formatCurrency } from './utils.js';
+import { formatCurrency, getImageUrl } from './utils.js';
 
 let carritoPos = [];
 let buscarPosResults = [];
@@ -89,7 +89,7 @@ export async function cargarThumbsProductos(items) {
                         const cardItem = JSON.parse(parsedData);
                         if (cardItem.producto_id === pid) {
                             const thumb = card.querySelector('.product-thumb');
-                            if (thumb) thumb.innerHTML = `<img src="${API_URL.replace('/api', '')}${principal.ruta}" alt="thumb" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
+                            if (thumb) thumb.innerHTML = `<img src="${getImageUrl(principal.ruta, API_URL)}" alt="thumb" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
                         }
                     } catch (e) {
                         console.error("Error parseando data-item", e);
@@ -221,7 +221,7 @@ export async function cargarThumbsCarrito() {
                 const thumbs = document.querySelectorAll('.cart-thumb');
                 carritoPos.forEach((item, idx) => {
                     if (item.producto_id === pid && thumbs[idx]) {
-                        thumbs[idx].innerHTML = `<img src="${API_URL.replace('/api', '')}${principal.ruta}" alt="thumb" style="width:100%;height:100%;object-fit:cover;">`;
+                        thumbs[idx].innerHTML = `<img src="${getImageUrl(principal.ruta, API_URL)}" alt="thumb" style="width:100%;height:100%;object-fit:cover;">`;
                     }
                 });
             }

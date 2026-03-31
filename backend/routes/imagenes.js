@@ -1,150 +1,160 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const db = require('../database');
+const { upload, deleteImage, getPublicIdFromUrl } = require('../services/cloudinary');
+const prisma = require('../prisma');
 const { verificarToken, soloAdmin } = require('./auth');
 
-// --- Configuración de Multer ---
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const dir = path.join(__dirname, '..', 'uploads');
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        cb(null, dir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        cb(null, `prod-${req.params.id}-${uniqueSuffix}${ext}`);
+router.get('/:id/imagenes', verificarToken, async (req, res) => {
+    const productoId = parseInt(req.params.id);
+    try {
+        const imagenes = await prisma.productoImagen.findMany({
+            where: { productoId },
+            orderBy: [{ esPrincipal: 'desc' }, { orden: 'asc' }]
+        });
+        res.json(imagenes);
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
     }
 });
 
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Tipo de archivo no permitido. Solo JPEG, PNG, WebP y GIF.'), false);
-    }
-};
-
-const upload = multer({
-    storage,
-    fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB máx
-});
-
-// --- GET /api/productos/:id/imagenes → Listar imágenes de un producto ---
-router.get('/:id/imagenes', verificarToken, (req, res) => {
-    db.all(
-        `SELECT * FROM producto_imagenes WHERE producto_id = ? ORDER BY es_principal DESC, orden ASC`,
-        [req.params.id],
-        (err, rows) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json(rows);
-        }
-    );
-});
-
-// --- POST /api/productos/:id/imagenes → Subir imagen(es) ---
-router.post('/:id/imagenes', verificarToken, soloAdmin, upload.array('imagenes', 10), (req, res) => {
+router.post('/:id/imagenes', verificarToken, soloAdmin, upload.array('imagenes', 10), async (req, res) => {
     if (!req.files || req.files.length === 0) {
         return res.status(400).json({ error: 'No se subieron archivos' });
     }
 
-    // Verificar que el producto existe
-    db.get('SELECT id FROM productos WHERE id = ?', [req.params.id], (err, producto) => {
-        if (err) return res.status(500).json({ error: err.message });
+    const productoId = parseInt(req.params.id);
+
+    try {
+        const producto = await prisma.producto.findUnique({ where: { id: productoId } });
         if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
 
-        // Obtener el orden máximo actual
-        db.get('SELECT COALESCE(MAX(orden), -1) as maxOrden FROM producto_imagenes WHERE producto_id = ?',
-            [req.params.id], (err, row) => {
-                if (err) return res.status(500).json({ error: err.message });
+        const countResult = await prisma.productoImagen.count({ where: { productoId } });
+        const esPrimera = countResult === 0;
 
-                let orden = (row.maxOrden || 0) + 1;
-                const insertadas = [];
+        const maxOrden = await prisma.productoImagen.aggregate({
+            where: { productoId },
+            _max: { orden: true }
+        });
 
-                // Verificar si ya tiene imágenes (para marcar la primera como principal)
-                db.get('SELECT COUNT(*) as count FROM producto_imagenes WHERE producto_id = ?',
-                    [req.params.id], (err, countRow) => {
-                        if (err) return res.status(500).json({ error: err.message });
+        let orden = (maxOrden._max.orden || 0) + 1;
+        const insertadas = [];
 
-                        const esPrimera = countRow.count === 0;
+        for (let i = 0; i < req.files.length; i++) {
+            const file = req.files[i];
+            const esPrincipal = esPrimera && i === 0;
 
-                        const stmt = db.prepare(
-                            `INSERT INTO producto_imagenes (producto_id, nombre_archivo, ruta, es_principal, orden)
-                             VALUES (?, ?, ?, ?, ?)`
-                        );
+            const imagen = await prisma.productoImagen.create({
+                data: {
+                    productoId,
+                    nombreArchivo: file.originalname,
+                    ruta: file.path,
+                    publicId: file.filename,
+                    esPrincipal,
+                    orden: orden + i
+                }
+            });
 
-                        req.files.forEach((file, index) => {
-                            const esPrincipal = esPrimera && index === 0 ? 1 : 0;
-                            stmt.run(
-                                req.params.id,
-                                file.originalname,
-                                `/uploads/${file.filename}`,
-                                esPrincipal,
-                                orden + index
-                            );
-                            insertadas.push({
-                                nombre_archivo: file.originalname,
-                                ruta: `/uploads/${file.filename}`,
-                                es_principal: esPrincipal
-                            });
-                        });
-
-                        stmt.finalize((err) => {
-                            if (err) return res.status(500).json({ error: err.message });
-                            res.status(201).json({
-                                message: `${insertadas.length} imagen(es) subida(s)`,
-                                imagenes: insertadas
-                            });
-                        });
-                    }
-                );
-            }
-        );
-    });
-});
-
-// --- PUT /api/productos/:id/imagenes/:imgId/principal → Marcar como imagen principal ---
-router.put('/:id/imagenes/:imgId/principal', verificarToken, soloAdmin, (req, res) => {
-    // Primero quitar la principal actual
-    db.run('UPDATE producto_imagenes SET es_principal = 0 WHERE producto_id = ?', [req.params.id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-
-        // Marcar la nueva principal
-        db.run('UPDATE producto_imagenes SET es_principal = 1 WHERE id = ? AND producto_id = ?',
-            [req.params.imgId, req.params.id], function (err) {
-                if (err) return res.status(500).json({ error: err.message });
-                if (this.changes === 0) return res.status(404).json({ error: 'Imagen no encontrada' });
-                res.json({ message: 'Imagen marcada como principal' });
-            }
-        );
-    });
-});
-
-// --- DELETE /api/productos/:id/imagenes/:imgId → Eliminar imagen ---
-router.delete('/:id/imagenes/:imgId', verificarToken, soloAdmin, (req, res) => {
-    db.get('SELECT * FROM producto_imagenes WHERE id = ? AND producto_id = ?',
-        [req.params.imgId, req.params.id], (err, img) => {
-            if (err) return res.status(500).json({ error: err.message });
-            if (!img) return res.status(404).json({ error: 'Imagen no encontrada' });
-
-            // Eliminar archivo físico
-            const filePath = path.join(__dirname, '..', img.ruta);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
-
-            // Eliminar registro de la DB
-            db.run('DELETE FROM producto_imagenes WHERE id = ?', [img.id], function (err) {
-                if (err) return res.status(500).json({ error: err.message });
-                res.json({ message: 'Imagen eliminada' });
+            insertadas.push({
+                nombre_archivo: imagen.nombreArchivo,
+                ruta: imagen.ruta,
+                es_principal: imagen.esPrincipal
             });
         }
-    );
+
+        res.status(201).json({
+            message: `${insertadas.length} imagen(es) subida(s) a Cloudinary`,
+            imagenes: insertadas
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/:id/imagenes-url', verificarToken, soloAdmin, async (req, res) => {
+    const { url } = req.body;
+    const productoId = parseInt(req.params.id);
+
+    if (!url) {
+        return res.status(400).json({ error: 'URL de imagen requerida' });
+    }
+
+    try {
+        const producto = await prisma.producto.findUnique({ where: { id: productoId } });
+        if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+
+        const countResult = await prisma.productoImagen.count({ where: { productoId } });
+        const esPrimera = countResult === 0;
+
+        const maxOrden = await prisma.productoImagen.aggregate({
+            where: { productoId },
+            _max: { orden: true }
+        });
+
+        const imagen = await prisma.productoImagen.create({
+            data: {
+                productoId,
+                nombreArchivo: url.split('/').pop() || 'imagen-url',
+                ruta: url,
+                publicId: null,
+                esPrincipal: esPrimera,
+                orden: (maxOrden._max.orden || 0) + 1
+            }
+        });
+
+        res.status(201).json({
+            message: 'Imagen por URL agregada',
+            imagen: {
+                nombre_archivo: imagen.nombreArchivo,
+                ruta: imagen.ruta,
+                es_principal: imagen.esPrincipal
+            }
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+router.put('/:id/imagenes/:imgId/principal', verificarToken, soloAdmin, async (req, res) => {
+    const productoId = parseInt(req.params.id);
+    const imgId = parseInt(req.params.imgId);
+
+    try {
+        await prisma.productoImagen.updateMany({
+            where: { productoId },
+            data: { esPrincipal: false }
+        });
+
+        const imagen = await prisma.productoImagen.update({
+            where: { id: imgId },
+            data: { esPrincipal: true }
+        });
+
+        res.json({ message: 'Imagen marcada como principal' });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+router.delete('/:id/imagenes/:imgId', verificarToken, soloAdmin, async (req, res) => {
+    const imgId = parseInt(req.params.imgId);
+    const productoId = parseInt(req.params.id);
+
+    try {
+        const img = await prisma.productoImagen.findFirst({
+            where: { id: imgId, productoId }
+        });
+
+        if (!img) return res.status(404).json({ error: 'Imagen no encontrada' });
+
+        if (img.publicId) {
+            await deleteImage(img.publicId);
+        }
+
+        await prisma.productoImagen.delete({ where: { id: imgId } });
+        res.json({ message: 'Imagen eliminada de Cloudinary' });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;

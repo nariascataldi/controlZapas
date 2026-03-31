@@ -1,108 +1,185 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database');
+const prisma = require('../prisma');
 const { verificarToken, soloAdmin } = require('./auth');
 
-// Obtener todos los productos y sus variantes
-router.get('/', verificarToken, (req, res) => {
-    const query = `
-        SELECT p.id as producto_id, p.nombre, p.marca, p.precio_mayorista, p.precio_minorista, p.categoria,
-               v.id as variante_id, v.sku, v.color, v.talla, v.stock_actual, v.stock_minimo
-        FROM productos p
-        LEFT JOIN variantes v ON p.id = v.producto_id
-    `;
-    
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            return res.status(500).json({ error: 'Error al obtener productos' });
-        }
-        res.json(rows);
-    });
+router.get('/', verificarToken, async (req, res) => {
+    try {
+        const productos = await prisma.producto.findMany({
+            include: {
+                variantes: true
+            }
+        });
+        
+        const result = productos.flatMap(p => 
+            p.variantes.length > 0 
+                ? p.variantes.map(v => ({
+                    producto_id: p.id,
+                    nombre: p.nombre,
+                    marca: p.marca,
+                    precio_mayorista: p.precioMayorista,
+                    precio_minorista: p.precioMinorista,
+                    categoria: p.categoria,
+                    variante_id: v.id,
+                    sku: v.sku,
+                    color: v.color,
+                    talla: v.talla,
+                    stock_actual: v.stockActual,
+                    stock_minimo: v.stockMinimo
+                }))
+                : [{
+                    producto_id: p.id,
+                    nombre: p.nombre,
+                    marca: p.marca,
+                    precio_mayorista: p.precioMayorista,
+                    precio_minorista: p.precioMinorista,
+                    categoria: p.categoria,
+                    variante_id: null,
+                    sku: null,
+                    color: null,
+                    talla: null,
+                    stock_actual: null,
+                    stock_minimo: null
+                }]
+        );
+        
+        res.json(result);
+    } catch (err) {
+        return res.status(500).json({ error: 'Error al obtener productos' });
+    }
 });
 
-// Crear un nuevo producto (Solo admin)
-router.post('/', verificarToken, soloAdmin, (req, res) => {
+router.post('/', verificarToken, soloAdmin, async (req, res) => {
     const { nombre, marca, precio_mayorista, precio_minorista, categoria, variantes } = req.body;
     
-    db.run(
-        `INSERT INTO productos (nombre, marca, precio_mayorista, precio_minorista, categoria) VALUES (?, ?, ?, ?, ?)`,
-        [nombre, marca, precio_mayorista, precio_minorista, categoria],
-        function(err) {
-            if (err) return res.status(500).json({ error: 'Error al crear producto' });
-            
-            const productoId = this.lastID;
-            
-            if (variantes && variantes.length > 0) {
-                const stmt = db.prepare(`INSERT INTO variantes (producto_id, sku, color, talla, stock_actual, stock_minimo) VALUES (?, ?, ?, ?, ?, ?)`);
-                variantes.forEach(v => {
-                    stmt.run(productoId, v.sku, v.color, v.talla, v.stock_actual, v.stock_minimo);
-                });
-                stmt.finalize();
+    try {
+        const producto = await prisma.producto.create({
+            data: {
+                nombre,
+                marca,
+                precioMayorista: precio_mayorista,
+                precioMinorista: precio_minorista,
+                categoria
             }
-            
-            res.json({ id: productoId, mensaje: 'Producto creado exitosamente' });
+        });
+        
+        if (variantes && variantes.length > 0) {
+            await prisma.variante.createMany({
+                data: variantes.map(v => ({
+                    productoId: producto.id,
+                    sku: v.sku,
+                    color: v.color,
+                    talla: v.talla,
+                    stockActual: v.stock_actual || 0,
+                    stockMinimo: v.stock_minimo || 0
+                }))
+            });
         }
-    );
+        
+        res.json({ id: producto.id, mensaje: 'Producto creado exitosamente' });
+    } catch (err) {
+        return res.status(500).json({ error: 'Error al crear producto' });
+    }
 });
 
-// Actualizar stock de una variante (Solo admin)
-router.put('/variantes/:id/stock', verificarToken, soloAdmin, (req, res) => {
+router.put('/variantes/:id/stock', verificarToken, soloAdmin, async (req, res) => {
     const { stock_actual } = req.body;
-    const varianteId = req.params.id;
+    const varianteId = parseInt(req.params.id);
     
-    db.run(
-        `UPDATE variantes SET stock_actual = ? WHERE id = ?`,
-        [stock_actual, varianteId],
-        function(err) {
-            if (err) return res.status(500).json({ error: 'Error al actualizar stock' });
-            res.json({ mensaje: 'Stock actualizado correctamente' });
-        }
-    );
+    try {
+        await prisma.variante.update({
+            where: { id: varianteId },
+            data: { stockActual: stock_actual }
+        });
+        res.json({ mensaje: 'Stock actualizado correctamente' });
+    } catch (err) {
+        return res.status(500).json({ error: 'Error al actualizar stock' });
+    }
 });
 
-// Eliminar una variante (Solo admin)
-router.delete('/variantes/:id', verificarToken, soloAdmin, (req, res) => {
-    const varianteId = req.params.id;
-    db.run(`DELETE FROM variantes WHERE id = ?`, [varianteId], function(err) {
-        if (err) return res.status(500).json({ error: 'Error al eliminar variante' });
+router.delete('/variantes/:id', verificarToken, soloAdmin, async (req, res) => {
+    const varianteId = parseInt(req.params.id);
+    try {
+        await prisma.variante.delete({
+            where: { id: varianteId }
+        });
         res.json({ mensaje: 'Variante eliminada correctamente' });
-    });
+    } catch (err) {
+        return res.status(500).json({ error: 'Error al eliminar variante' });
+    }
 });
 
-// Búsqueda de productos por texto, talla (disponible para todos los roles)
-router.get('/buscar', verificarToken, (req, res) => {
-    const q = req.query.q ? `%${req.query.q}%` : '%';
-    const query = `
-        SELECT p.id as producto_id, p.nombre, p.marca, p.precio_mayorista, p.precio_minorista,
-               v.id as variante_id, v.sku, v.color, v.talla, v.stock_actual
-        FROM productos p
-        JOIN variantes v ON p.id = v.producto_id
-        WHERE p.nombre LIKE ? OR v.sku LIKE ? OR v.talla LIKE ?
-    `;
-    
-    db.all(query, [q, q, q], (err, rows) => {
-        if (err) return res.status(500).json({ error: 'Error en la búsqueda' });
-        res.json(rows);
-    });
+router.get('/buscar', verificarToken, async (req, res) => {
+    const q = req.query.q || '';
+    try {
+        const productos = await prisma.producto.findMany({
+            where: {
+                OR: [
+                    { nombre: { contains: q, mode: 'insensitive' } },
+                    { variantes: { some: { sku: { contains: q } } } },
+                    { variantes: { some: { talla: { contains: q } } } }
+                ]
+            },
+            include: {
+                variantes: true
+            }
+        });
+        
+        const result = productos.flatMap(p =>
+            p.variantes.map(v => ({
+                producto_id: p.id,
+                nombre: p.nombre,
+                marca: p.marca,
+                precio_mayorista: p.precioMayorista,
+                precio_minorista: p.precioMinorista,
+                variante_id: v.id,
+                sku: v.sku,
+                color: v.color,
+                talla: v.talla,
+                stock_actual: v.stockActual
+            }))
+        );
+        
+        res.json(result);
+    } catch (err) {
+        return res.status(500).json({ error: 'Error en la búsqueda' });
+    }
 });
 
-// Obtener un producto específico por ID
-router.get('/:id', verificarToken, (req, res) => {
-    const productId = req.params.id;
-    db.get(`SELECT * FROM productos WHERE id = ?`, [productId], (err, row) => {
-        if (err) return res.status(500).json({ error: 'Error al obtener producto' });
-        if (!row) return res.status(404).json({ error: 'Producto no encontrado' });
-        res.json(row);
-    });
+router.get('/:id', verificarToken, async (req, res) => {
+    const productId = parseInt(req.params.id);
+    try {
+        const producto = await prisma.producto.findUnique({
+            where: { id: productId },
+            include: { variantes: true }
+        });
+        
+        if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+        
+        res.json({
+            id: producto.id,
+            nombre: producto.nombre,
+            marca: producto.marca,
+            precio_mayorista: producto.precioMayorista,
+            precio_minorista: producto.precioMinorista,
+            categoria: producto.categoria,
+            variantes: producto.variantes
+        });
+    } catch (err) {
+        return res.status(500).json({ error: 'Error al obtener producto' });
+    }
 });
 
-// Obtener imágenes de un producto
-router.get('/:id/imagenes', verificarToken, (req, res) => {
-    const productId = req.params.id;
-    db.all(`SELECT * FROM producto_imagenes WHERE producto_id = ?`, [productId], (err, rows) => {
-        if (err) return res.status(500).json({ error: 'Error al obtener imágenes' });
-        res.json(rows);
-    });
+router.get('/:id/imagenes', verificarToken, async (req, res) => {
+    const productId = parseInt(req.params.id);
+    try {
+        const imagenes = await prisma.productoImagen.findMany({
+            where: { productoId: productId }
+        });
+        res.json(imagenes);
+    } catch (err) {
+        return res.status(500).json({ error: 'Error al obtener imágenes' });
+    }
 });
 
 module.exports = router;

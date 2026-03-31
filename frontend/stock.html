@@ -152,6 +152,12 @@
                         </div>
                         <input type="file" id="inputImagenes" class="d-none" accept="image/jpeg,image/png,image/webp,image/gif" multiple onchange="previsualizarImagenes(this.files)">
                         
+                        <div class="input-group mb-3">
+                            <input type="url" class="form-control" id="inputUrlImagen" placeholder="https://ejemplo.com/imagen.jpg">
+                            <button class="btn btn-outline-primary" type="button" onclick="agregarImagenPorUrl()">Agregar URL</button>
+                        </div>
+                        <div class="text-muted mb-3" style="font-size:0.7rem;">Ingresa una URL de imagen (JPEG, PNG, WebP, GIF)</div>
+                        
                         <div id="galeriaPreview" class="d-flex flex-wrap gap-2 mb-4">
                             <!-- Thumbnails se insertan por JS -->
                         </div>

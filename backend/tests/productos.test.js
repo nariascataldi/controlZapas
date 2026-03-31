@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../server');
-const db = require('../database');
+const prisma = require('../prisma');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -13,19 +13,19 @@ describe('Products API Integration Tests', () => {
   beforeAll(async () => {
     await global.clearDatabase();
     
-    // Crear admin y usuario
     const adminHash = bcrypt.hashSync('admin123', 10);
     const userHash = bcrypt.hashSync('user123', 10);
     
-    await new Promise((resolve) => {
-      db.serialize(() => {
-        db.run(`INSERT INTO usuarios (nombre, password_hash, rol) VALUES ('admin_test', ?, 'ADMIN')`, [adminHash]);
-        db.run(`INSERT INTO usuarios (nombre, password_hash, rol) VALUES ('user_test', ?, 'VENDEDOR')`, [userHash], resolve);
-      });
+    const admin = await prisma.usuario.create({
+      data: { nombre: 'admin_test', passwordHash: adminHash, rol: 'ADMIN', porcentajeComision: 0 }
+    });
+    
+    const user = await prisma.usuario.create({
+      data: { nombre: 'user_test', passwordHash: userHash, rol: 'VENDEDOR', porcentajeComision: 5 }
     });
 
-    adminToken = jwt.sign({ id: 1, nombre: 'admin_test', rol: 'ADMIN' }, process.env.JWT_SECRET);
-    userToken = jwt.sign({ id: 2, nombre: 'user_test', rol: 'VENDEDOR' }, process.env.JWT_SECRET);
+    adminToken = jwt.sign({ id: admin.id, nombre: admin.nombre, rol: admin.rol, porcentajeComision: admin.porcentajeComision }, process.env.JWT_SECRET);
+    userToken = jwt.sign({ id: user.id, nombre: user.nombre, rol: user.rol, porcentajeComision: user.porcentajeComision }, process.env.JWT_SECRET);
   });
 
   describe('POST /api/productos', () => {
@@ -91,7 +91,7 @@ describe('Products API Integration Tests', () => {
         .set('Authorization', `Bearer ${userToken}`);
       
       expect(response.status).toBe(200);
-      expect(response.body.some(p => p.nombre.includes('Running'))).toBe(true);
+      expect(response.body.some(p => p.nombre && p.nombre.includes('Running'))).toBe(true);
     });
   });
 

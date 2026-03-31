@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id                Int       @id @default(autoincrement())
+  nombre            String    @unique
+  passwordHash      String    @map("password_hash")
+  rol               Rol       @default(VENDEDOR)
+  porcentajeComision Float     @default(0) @map("porcentaje_comision")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  ventas  Venta[]
+  @@map("usuarios")
+}
+
+model Producto {
+  id               Int       @id @default(autoincrement())
+  nombre           String
+  marca            String?
+  precioMayorista  Float     @map("precio_mayorista")
+  precioMinorista  Float     @map("precio_minorista")
+  categoria        String?
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  variantes        Variante[]
+  imagenes         ProductoImagen[]
+  @@map("productos")
+}
+
+model Variante {
+  id            Int       @id @default(autoincrement())
+  productoId    Int       @map("producto_id")
+  sku           String    @unique
+  color         String?
+  talla         String
+  stockActual   Int       @default(0) @map("stock_actual")
+  stockMinimo   Int       @default(0) @map("stock_minimo")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  producto      Producto  @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  ventaDetalles VentaDetalle[]
+
+  @@map("variantes")
+}
+
+model Cliente {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  contacto  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  ventas Venta[]
+  @@map("clientes")
+}
+
+model Venta {
+  id                Int        @id @default(autoincrement())
+  fecha             DateTime   @default(now())
+  clienteId         Int?       @map("cliente_id")
+  vendedorId        Int        @map("vendedor_id")
+  total             Float
+  comisionCalculada Float      @default(0) @map("comision_calculada")
+  metodoPago        String?    @map("metodo_pago")
+  estado            String     @default("Pagado")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+
+  cliente           Cliente?   @relation(fields: [clienteId], references: [id])
+  vendedor          Usuario    @relation(fields: [vendedorId], references: [id])
+  detalles          VentaDetalle[]
+
+  @@map("ventas")
+}
+
+model VentaDetalle {
+  id             Int     @id @default(autoincrement())
+  ventaId        Int     @map("venta_id")
+  varianteId     Int     @map("variante_id")
+  cantidad       Int
+  precioUnitario Float   @map("precio_unitario")
+
+  venta          Venta   @relation(fields: [ventaId], references: [id], onDelete: Cascade)
+  variante       Variante @relation(fields: [varianteId], references: [id])
+
+  @@map("venta_detalles")
+}
+
+model ProductoImagen {
+  id           Int      @id @default(autoincrement())
+  productoId   Int      @map("producto_id")
+  nombreArchivo String  @map("nombre_archivo")
+  ruta         String
+  publicId    String?  @map("public_id")
+  esPrincipal  Boolean  @default(false) @map("es_principal")
+  orden        Int      @default(0)
+  fechaSubida  DateTime @default(now()) @map("fecha_subida")
+
+  producto     Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@map("producto_imagenes")
+}
+
+enum Rol {
+  ADMIN
+  VENDEDOR
+}

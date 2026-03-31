@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../server');
-const db = require('../database');
+const prisma = require('../prisma');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -8,33 +8,36 @@ describe('Sales API Integration Tests', () => {
   let adminToken;
   let userToken;
   let varianteId;
+  let adminId;
+  let vendId;
 
   beforeAll(async () => {
     await global.clearDatabase();
     
-    // Crear admin, usuario y un producto con stock
     const adminHash = bcrypt.hashSync('admin123', 10);
     const userHash = bcrypt.hashSync('vendedor123', 10);
     
-    await new Promise((resolve) => {
-      db.serialize(() => {
-        db.run(`INSERT INTO usuarios (nombre, password_hash, rol, porcentaje_comision) VALUES ('admin_v', ?, 'ADMIN', 0)`, [adminHash]);
-        db.run(`INSERT INTO usuarios (nombre, password_hash, rol, porcentaje_comision) VALUES ('vend_v', ?, 'VENDEDOR', 10)`, [userHash]);
-        db.run(`INSERT INTO productos (nombre, precio_mayorista, precio_minorista) VALUES ('Zapa Test', 50, 100)`, function() {
-          db.run(`INSERT INTO variantes (producto_id, sku, talla, stock_actual) VALUES (?, 'SKU-TEST', '42', 5)`, [this.lastID], resolve);
-        });
-      });
+    const admin = await prisma.usuario.create({
+      data: { nombre: 'admin_v', passwordHash: adminHash, rol: 'ADMIN', porcentajeComision: 0 }
+    });
+    adminId = admin.id;
+    
+    const user = await prisma.usuario.create({
+      data: { nombre: 'vend_v', passwordHash: userHash, rol: 'VENDEDOR', porcentajeComision: 10 }
+    });
+    vendId = user.id;
+
+    const producto = await prisma.producto.create({
+      data: { nombre: 'Zapa Test', precioMayorista: 50, precioMinorista: 100 }
     });
 
-    // Obtener IDs reales
-    const adminId = await new Promise(r => db.get("SELECT id FROM usuarios WHERE nombre = 'admin_v'", (e, row) => r(row.id)));
-    const vendId = await new Promise(r => db.get("SELECT id FROM usuarios WHERE nombre = 'vend_v'", (e, row) => r(row.id)));
+    const variante = await prisma.variante.create({
+      data: { productoId: producto.id, sku: 'SKU-TEST', talla: '42', stockActual: 5, stockMinimo: 1 }
+    });
+    varianteId = variante.id;
 
-    adminToken = jwt.sign({ id: adminId, nombre: 'admin_v', rol: 'ADMIN' }, process.env.JWT_SECRET);
-    userToken = jwt.sign({ id: vendId, nombre: 'vend_v', rol: 'VENDEDOR', porcentaje_comision: 10 }, process.env.JWT_SECRET);
-    
-    // Obtener varianteId
-    varianteId = await new Promise(r => db.get('SELECT id FROM variantes LIMIT 1', (e, row) => r(row.id)));
+    adminToken = jwt.sign({ id: admin.id, nombre: admin.nombre, rol: admin.rol, porcentajeComision: admin.porcentajeComision }, process.env.JWT_SECRET);
+    userToken = jwt.sign({ id: user.id, nombre: user.nombre, rol: user.rol, porcentajeComision: user.porcentajeComision }, process.env.JWT_SECRET);
   });
 
   describe('POST /api/ventas', () => {
@@ -55,13 +58,11 @@ describe('Sales API Integration Tests', () => {
       expect(response.status).toBe(200);
       expect(response.body.mensaje).toBe('Venta registrada exitosamente');
 
-      // Verificar stock final (5 - 2 = 3)
-      const variante = await new Promise(r => db.get('SELECT stock_actual FROM variantes WHERE id = ?', [varianteId], (e, row) => r(row)));
-      expect(variante.stock_actual).toBe(3);
+      const variante = await prisma.variante.findUnique({ where: { id: varianteId } });
+      expect(variante.stockActual).toBe(3);
 
-      // Verificar comisión (200 * 0.10 = 20)
-      const venta = await new Promise(r => db.get('SELECT comision_calculada FROM ventas WHERE id = ?', [response.body.venta_id], (e, row) => r(row)));
-      expect(venta.comision_calculada).toBe(20);
+      const venta = await prisma.venta.findUnique({ where: { id: response.body.venta_id } });
+      expect(venta.comisionCalculada).toBe(20);
     });
 
     test('Should fail if stock is insufficient', async () => {
@@ -79,9 +80,8 @@ describe('Sales API Integration Tests', () => {
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Stock insuficiente para uno o más artículos');
       
-      // Verificar que el stock NO cambió (sigue en 3)
-      const variante = await new Promise(r => db.get('SELECT stock_actual FROM variantes WHERE id = ?', [varianteId], (e, row) => r(row)));
-      expect(variante.stock_actual).toBe(3);
+      const variante = await prisma.variante.findUnique({ where: { id: varianteId } });
+      expect(variante.stockActual).toBe(3);
     });
   });
 
@@ -91,7 +91,7 @@ describe('Sales API Integration Tests', () => {
         .get('/api/ventas')
         .set('Authorization', `Bearer ${adminToken}`);
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body).toHaveProperty('data');
     });
   });
 });
