@@ -1,3 +1,20 @@
+/* Stock Alert Card - only shows when stock is > 0 */
+.card.stock-alert {
+  border-color: var(--colorError) !important;
+}
+
+.card.stock-alert .text-muted {
+  color: var(--colorError) !important;
+}
+
+.card.stock-alert #statStockBajo {
+  color: var(--colorError) !important;
+}
+
+.card.stock-alert .text-muted i {
+  color: var(--colorError) !important;
+}
+
 /* Variables y Paleta de Colores Exclusiva `Laced Precision` (Stitch) */
 :root {
   --colorPrimary: #0049e6;        /* Azul vibrante principal */
@@ -855,6 +872,81 @@ body.login-page {
   box-shadow: 0 8px 24px rgba(0,73,230,0.3); 
 }
 
-.bg-gradient-primary {
-  background: linear-gradient(135deg, #0049e6, #829bff);
+/* Stock Alert Card - only shows when stock is > 0 */
+.card.stock-alert {
+  border-color: var(--colorError) !important;
+}
+
+.card.stock-alert .text-muted {
+  color: var(--colorError) !important;
+}
+
+.card.stock-alert #statStockBajo {
+  color: var(--colorError) !important;
+}
+
+.card.stock-alert .text-muted i {
+  color: var(--colorError) !important;
+}
+.btn-size-filter {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  background-color: #f0f1f2;
+  color: #595c5d;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-size-filter:hover {
+  background-color: #e0e3e4;
+  color: #2c2f30;
+}
+
+.btn-size-filter.active {
+  background-color: var(--colorPrimary) !important;
+  color: #fff !important;
+  border-color: var(--colorPrimary) !important;
+  box-shadow: 0 4px 12px rgba(0, 73, 230, 0.25);
+}
+
+.btn-size-filter::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile Bottom Navigation */
+.mobile-bottom-nav {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255,255,255,0.95) !important;
+}
+
+.mobile-bottom-nav a:hover,
+.mobile-bottom-nav a:focus {
+  color: var(--colorPrimary) !important;
+}
+
+.mobile-fab {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mobile-fab:active {
+  transform: scale(0.95);
+}
+
+/* Mobile Card Layout */
+.mobile-product-card {
+  background: var(--colorSurfaceLowest);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.mobile-product-card:hover {
+  transform: scale(1.02);
+  background-color: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
 }

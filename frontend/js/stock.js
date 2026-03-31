@@ -4,19 +4,172 @@ import { formatCurrency, getImageUrl } from './utils.js';
 
 let inventarioGlobal = [];
 let variantesTemporales = [];
-let imagenesTemporales = []; // Objects: { type: 'file'|'url', data: File|string, preview: string }
+let imagenesTemporales = [];
+
+export async function cargarStatsInventario() {
+    try {
+        const stats = await fetchAPI('/stats/inventario');
+        
+        document.getElementById('statTotalSku').textContent = stats.totalSku?.toLocaleString() || '0';
+        document.getElementById('statValorInventario').textContent = formatCurrency(stats.valorInventario || 0);
+        
+        const stockBajoEl = document.getElementById('statStockBajo');
+        const stockBajo = stats.stockBajo || 0;
+        stockBajoEl.textContent = stockBajo;
+        
+        // Apply styling based on stock level
+        const card = stockBajoEl.closest('.card');
+        if (stockBajo === 0) {
+            card.classList.remove('stock-alert');
+            stockBajoEl.style.color = '';
+        } else {
+            card.classList.add('stock-alert');
+        }
+        
+        document.getElementById('statRotacion').textContent = (stats.rotacion || 0) + 'x';
+    } catch (e) {
+        console.error('Error cargando stats inventario:', e);
+        document.getElementById('statTotalSku').textContent = '-';
+        document.getElementById('statValorInventario').textContent = '-';
+        document.getElementById('statStockBajo').textContent = '-';
+        document.getElementById('statRotacion').textContent = '-';
+    }
+}
 
 export async function cargarInventario() {
     if (!window.location.pathname.endsWith('stock.html')) return;
     try {
         const data = await fetchAPI('/productos');
         inventarioGlobal = data;
+        
+        generarBotonesTalla();
         renderStock();
+        renderMobileStock();
+        cargarStatsInventario();
 
         if (getUser().rol === 'ADMIN') {
             document.getElementById('btnAdminNuevoProd').classList.remove('d-none');
         }
+
+        // Toggle mobile/desktop layouts based on screen size
+        handleLayoutToggle();
+        window.addEventListener('resize', handleLayoutToggle);
     } catch (e) { console.error(e); }
+}
+
+export function generarBotonesTalla() {
+    const container = document.getElementById('sizeFilters');
+    if (!container || !inventarioGlobal.length) {
+        if (container) container.innerHTML = '<span class="text-muted small">No hay productos</span>';
+        return;
+    }
+
+    // Extract unique sizes and sort numerically
+    const tallas = [...new Set(inventarioGlobal.map(item => parseFloat(item.talla)))]
+        .filter(t => !isNaN(t))
+        .sort((a, b) => a - b);
+
+    if (tallas.length === 0) {
+        container.innerHTML = '<span class="text-muted small">Sin tallas disponibles</span>';
+        return;
+    }
+
+    // Build HTML: "Todas" button + size buttons (Todas starts active by default)
+    let html = `<button class="btn btn-size-filter flex-shrink-0 active" data-size="all" id="btnTodasTallas">Todas</button>`;
+    tallas.forEach(talla => {
+        html += `<button class="btn btn-size-filter flex-shrink-0" data-size="${talla}">${talla}</button>`;
+    });
+
+    container.innerHTML = html;
+
+    // Re-attach click handlers for multi-select
+    const sizeButtons = container.querySelectorAll('.btn-size-filter');
+    sizeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const size = btn.dataset.size;
+            
+            if (size === 'all') {
+                // "Todas" clears all other selections and shows all products
+                sizeButtons.forEach(b => {
+                    b.classList.remove('active');
+                });
+                btn.classList.add('active');
+            } else {
+                // Deselect "Todas" when selecting individual sizes
+                const btnTodas = document.getElementById('btnTodasTallas');
+                if (btnTodas) {
+                    btnTodas.classList.remove('active');
+                }
+                
+                // Toggle this button
+                if (btn.classList.contains('active')) {
+                    btn.classList.remove('active');
+                } else {
+                    btn.classList.add('active');
+                }
+            }
+            
+            actualizarBotonLimpiar();
+            filtrarStock();
+        });
+    });
+}
+
+function actualizarBotonLimpiar() {
+    const searchInput = document.getElementById('busquedaStock');
+    const hasSearchText = searchInput && searchInput.value.trim().length > 0;
+    
+    const activeButtons = document.querySelectorAll('.btn-size-filter.active');
+    const selectedSizes = Array.from(activeButtons).map(btn => btn.dataset.size);
+    const tieneSoloTodas = selectedSizes.length === 1 && selectedSizes.includes('all');
+    
+    const clearBtn = document.getElementById('clearSizeFilters');
+    if (clearBtn) {
+        // Show if: has search text OR has filters other than "Todas"
+        if (hasSearchText || !tieneSoloTodas) {
+            clearBtn.classList.remove('d-none');
+        } else {
+            clearBtn.classList.add('d-none');
+        }
+    }
+}
+
+export function limpiarFiltrosTalla() {
+    // Clear search input
+    const searchInput = document.getElementById('busquedaStock');
+    if (searchInput) searchInput.value = '';
+    
+    // Reset size filters to "Todas"
+    const sizeButtons = document.querySelectorAll('.btn-size-filter');
+    const btnTodas = document.getElementById('btnTodasTallas');
+    
+    sizeButtons.forEach(btn => btn.classList.remove('active'));
+    if (btnTodas) btnTodas.classList.add('active');
+    
+    actualizarBotonLimpiar();
+    filtrarStock();
+}
+
+function handleLayoutToggle() {
+    const isMobile = window.innerWidth < 768;
+    const desktopContainer = document.querySelector('.container.py-2:not(.d-md-none)');
+    const mobileContainer = document.querySelector('.container.py-2.d-md-none');
+    const fab = document.querySelector('.mobile-fab');
+    const bottomNav = document.querySelector('.mobile-bottom-nav');
+    
+    if (desktopContainer && mobileContainer) {
+        if (isMobile) {
+            desktopContainer.classList.add('d-none');
+            mobileContainer.classList.remove('d-none');
+            if (fab) fab.classList.remove('d-none');
+            if (bottomNav) bottomNav.classList.remove('d-none');
+        } else {
+            desktopContainer.classList.remove('d-none');
+            mobileContainer.classList.add('d-none');
+            if (fab) fab.classList.add('d-none');
+            if (bottomNav) bottomNav.classList.add('d-none');
+        }
+    }
 }
 
 function bgAlert(stock, min) {
@@ -143,13 +296,98 @@ export async function cargarThumbsStock(lista) {
 
 export function filtrarStock() {
     const text = document.getElementById('busquedaStock').value.toLowerCase();
-    const filtrado = inventarioGlobal.filter(i =>
-        (i.nombre && i.nombre.toLowerCase().includes(text)) ||
-        (i.sku && i.sku.toLowerCase().includes(text)) ||
-        (i.talla && i.talla.toString().includes(text))
-    );
+    
+    // Get all active size buttons (multi-select)
+    const activeSizeButtons = document.querySelectorAll('.btn-size-filter.active');
+    const selectedSizes = Array.from(activeSizeButtons).map(btn => btn.dataset.size);
+    const tieneTodas = selectedSizes.includes('all');
+    const selectedSizesNumbers = selectedSizes
+        .map(s => parseFloat(s))
+        .filter(s => !isNaN(s) && s !== 'all');
+    
+    const filtrado = inventarioGlobal.filter(i => {
+        const matchText = (i.nombre && i.nombre.toLowerCase().includes(text)) ||
+            (i.sku && i.sku.toLowerCase().includes(text)) ||
+            (i.talla && i.talla.toString().includes(text));
+        
+        // If "Todas" is selected or no sizes selected, show all
+        const matchSize = selectedSizes.length === 0 || tieneTodas || 
+            selectedSizesNumbers.includes(parseFloat(i.talla));
+        
+        return matchText && matchSize;
+    });
     renderStock(filtrado);
+    renderMobileStock(filtrado);
+    
+    // Update clear button visibility
+    actualizarBotonLimpiar();
 }
+
+// Render Mobile Card Layout
+export function renderMobileStock(lista = inventarioGlobal) {
+    const container = document.getElementById('mobileStockList');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const user = getUser();
+    const isAdmin = user && user.rol && user.rol.toUpperCase() === 'ADMIN';
+
+    if (lista.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-2">No se encontraron productos</p>
+            </div>`;
+        return;
+    }
+
+    lista.forEach(item => {
+        const isLowStock = item.stock_actual <= (item.stock_minimo || 2);
+        const stockBadge = item.stock_actual <= 0 
+            ? `<span class="badge bg-danger">SIN STOCK</span>`
+            : isLowStock 
+                ? `<span class="badge bg-warning text-dark">BAJO (${item.stock_actual})</span>`
+                : `<span class="badge bg-success">EN STOCK (${item.stock_actual})</span>`;
+
+        container.innerHTML += `
+            <article class="mobile-product-card">
+                <div class="d-flex gap-3">
+                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; flex-shrink: 0;">
+                        <i class="bi bi-box-seam text-muted" style="font-size: 2rem;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="fw-bold mb-1" style="font-size: 1rem;">${item.nombre}</h5>
+                            <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size: 0.6rem;">NEW</span>
+                        </div>
+                        <p class="text-muted mb-2" style="font-size: 0.75rem; font-family: monospace;">SKU: ${item.sku}</p>
+                        <div class="d-flex gap-2 align-items-center mb-2">
+                            <span class="badge bg-light text-dark">Talla ${item.talla}</span>
+                            <span class="text-muted small">${item.color || '-'}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold color-primary">${formatCurrency(item.precio_minorista)}</span>
+                            ${stockBadge}
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="verGaleriaStock(${item.producto_id}, '${item.nombre.replace(/'/g, "\\'")}')">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    ${isAdmin ? `
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="abrirModalAjustarStock(${item.variante_id}, ${item.stock_actual})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </article>
+        `;
+    });
+}
+
+// Expose to window
+window.renderMobileStock = renderMobileStock;
 
 export function agregarVarianteTemporal() {
     const s = document.getElementById('varSku').value;
@@ -423,7 +661,10 @@ if (formNuevoP) {
 
 window.renderStock = renderStock;
 window.cargarInventario = cargarInventario;
+window.cargarStatsInventario = cargarStatsInventario;
 window.filtrarStock = filtrarStock;
+window.generarBotonesTalla = generarBotonesTalla;
+window.limpiarFiltrosTalla = limpiarFiltrosTalla;
 window.agregarVarianteTemporal = agregarVarianteTemporal;
 window.renderVariantesTemp = renderVariantesTemp;
 window.handleDrop = handleDrop;

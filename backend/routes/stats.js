@@ -125,4 +125,43 @@ router.get('/top-productos', verificarToken, soloAdmin, async (req, res) => {
     }
 });
 
+router.get('/inventario', verificarToken, async (req, res) => {
+    try {
+        const variantes = await prisma.variante.findMany({
+            include: { producto: true }
+        });
+
+        const totalSku = variantes.length;
+        
+        const valorInventario = variantes.reduce((sum, v) => {
+            const precio = v.producto?.precioMayorista || v.producto?.precioMinorista || 0;
+            return sum + (v.stockActual * precio);
+        }, 0);
+
+        const stockBajo = variantes.filter(v => v.stockActual <= v.stockMinimo).length;
+
+        const hace30dias = new Date();
+        hace30dias.setDate(hace30dias.getDate() - 30);
+        
+        const ventasUltimoMes = await prisma.ventaDetalle.findMany({
+            where: {
+                venta: { fecha: { gte: hace30dias } }
+            }
+        });
+        
+        const unidadesVendidas = ventasUltimoMes.reduce((sum, d) => sum + d.cantidad, 0);
+        const rotacion = totalSku > 0 ? (unidadesVendidas / totalSku).toFixed(1) : 0;
+
+        res.json({
+            totalSku,
+            valorInventario: Math.round(valorInventario * 100) / 100,
+            stockBajo,
+            rotacion
+        });
+    } catch (error) {
+        console.error('Error calculando stats inventario:', error);
+        res.status(500).json({ error: 'Error interno obteniendo stats de inventario' });
+    }
+});
+
 module.exports = router;
