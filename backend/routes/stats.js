@@ -127,6 +127,27 @@ router.get('/top-productos', verificarToken, soloAdmin, async (req, res) => {
 
 router.get('/inventario', verificarToken, async (req, res) => {
     try {
+        const esAdmin = req.usuario?.rol === 'ADMIN';
+        
+        // Si es vendedor, solo devolver rotación (dato no sensible)
+        if (!esAdmin) {
+            const hace30dias = new Date();
+            hace30dias.setDate(hace30dias.getDate() - 30);
+            
+            const [variantes, ventasUltimoMes] = await Promise.all([
+                prisma.variante.count(),
+                prisma.ventaDetalle.findMany({
+                    where: { venta: { fecha: { gte: hace30dias } } }
+                })
+            ]);
+            
+            const unidadesVendidas = ventasUltimoMes.reduce((sum, d) => sum + d.cantidad, 0);
+            const rotacion = variantes > 0 ? (unidadesVendidas / variantes).toFixed(1) : 0;
+            
+            return res.json({ rotacion: parseFloat(rotacion) });
+        }
+        
+        // Si es admin, devolver todos los datos
         const variantes = await prisma.variante.findMany({
             include: { producto: true }
         });
@@ -156,7 +177,7 @@ router.get('/inventario', verificarToken, async (req, res) => {
             totalSku,
             valorInventario: Math.round(valorInventario * 100) / 100,
             stockBajo,
-            rotacion
+            rotacion: parseFloat(rotacion)
         });
     } catch (error) {
         console.error('Error calculando stats inventario:', error);

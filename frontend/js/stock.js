@@ -7,31 +7,53 @@ let variantesTemporales = [];
 let imagenesTemporales = [];
 
 export async function cargarStatsInventario() {
+    const esAdmin = getUser()?.rol?.toUpperCase() === 'ADMIN';
+    
+    // Ocultar elementos sensibles para vendedores
+    if (!esAdmin) {
+        document.querySelectorAll('.stat-admin').forEach(el => el.classList.add('d-none'));
+        document.querySelectorAll('.admin-only-float').forEach(el => {
+            el.style.display = 'none';
+        });
+        // Ajustar ancho del card de rotación para vendedores
+        document.querySelector('#statsDashboard').classList.add('justify-content-center');
+        const colRotacion = document.querySelector('#statsDashboard > div:last-child');
+        if (colRotacion) {
+            colRotacion.classList.remove('col-lg-3');
+            colRotacion.classList.add('col-lg-4', 'mx-auto');
+        }
+    } else {
+        // Mostrar floating button para admin
+        document.querySelectorAll('.admin-only-float').forEach(el => {
+            el.style.display = 'block';
+        });
+    }
+    
     try {
         const stats = await fetchAPI('/stats/inventario');
         
-        document.getElementById('statTotalSku').textContent = stats.totalSku?.toLocaleString() || '0';
-        document.getElementById('statValorInventario').textContent = formatCurrency(stats.valorInventario || 0);
-        
-        const stockBajoEl = document.getElementById('statStockBajo');
-        const stockBajo = stats.stockBajo || 0;
-        stockBajoEl.textContent = stockBajo;
-        
-        // Apply styling based on stock level
-        const card = stockBajoEl.closest('.card');
-        if (stockBajo === 0) {
-            card.classList.remove('stock-alert');
-            stockBajoEl.style.color = '';
-        } else {
-            card.classList.add('stock-alert');
+        // Solo mostrar datos sensibles si es admin
+        if (esAdmin) {
+            document.getElementById('statTotalSku').textContent = stats.totalSku?.toLocaleString() || '0';
+            document.getElementById('statValorInventario').textContent = formatCurrency(stats.valorInventario || 0);
+            
+            const stockBajoEl = document.getElementById('statStockBajo');
+            const stockBajo = stats.stockBajo || 0;
+            stockBajoEl.textContent = stockBajo;
+            
+            const card = stockBajoEl.closest('.card');
+            if (stockBajo === 0) {
+                card.classList.remove('stock-alert');
+                stockBajoEl.style.color = '';
+            } else {
+                card.classList.add('stock-alert');
+            }
         }
         
+        // Rotación siempre visible
         document.getElementById('statRotacion').textContent = (stats.rotacion || 0) + 'x';
     } catch (e) {
         console.error('Error cargando stats inventario:', e);
-        document.getElementById('statTotalSku').textContent = '-';
-        document.getElementById('statValorInventario').textContent = '-';
-        document.getElementById('statStockBajo').textContent = '-';
         document.getElementById('statRotacion').textContent = '-';
     }
 }

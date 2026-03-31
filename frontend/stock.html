@@ -58,22 +58,22 @@
         </div>
 
         <!-- Stats Dashboard -->
-        <div class="row g-3 mb-4">
-            <div class="col-6 col-lg-3">
+        <div class="row g-3 mb-4" id="statsDashboard">
+            <div class="col-6 col-lg-3 stat-admin">
                 <div class="card card-hover-kinetic p-3 h-100">
                     <p class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total SKU</p>
                     <p class="h3 fw-bold mb-1" id="statTotalSku">...</p>
                     <p class="text-success small fw-bold mb-0"><i class="bi bi-graph-up-arrow"></i> variantes activas</p>
                 </div>
             </div>
-            <div class="col-6 col-lg-3">
+            <div class="col-6 col-lg-3 stat-admin">
                 <div class="card card-hover-kinetic p-3 h-100">
                     <p class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Valor Inventario</p>
                     <p class="h3 fw-bold mb-1" id="statValorInventario">...</p>
                     <p class="text-muted small mb-0">Precio Mayorista</p>
                 </div>
             </div>
-            <div class="col-6 col-lg-3">
+            <div class="col-6 col-lg-3 stat-admin">
                 <div class="card card-hover-kinetic p-3 h-100 border-start border-4" id="cardStockBajo">
                     <p class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Stock Bajo</p>
                     <p class="h3 fw-bold mb-1" id="statStockBajo">...</p>
@@ -302,8 +302,8 @@
         </div>
     </div>
 
-    <!-- Floating Quick Contact Button -->
-    <div class="position-fixed bottom-0 end-0 p-3 d-none d-md-block" style="z-index: 1000; margin-bottom: 2rem; margin-right: 2rem;">
+    <!-- Floating Quick Contact Button (Admin only) -->
+    <div class="position-fixed bottom-0 end-0 p-3 admin-only-float" style="z-index: 1000; margin-bottom: 2rem; margin-right: 2rem; display: none;">
         <div class="d-flex align-items-center gap-3 bg-white rounded-4 p-3 shadow-lg" style="background: rgba(255,255,255,0.9) !important; backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5);">
             <button class="btn btn-success rounded-3 p-2" style="background: #10b981; border: none;">
                 <i class="bi bi-telephone-fill text-white"></i>
