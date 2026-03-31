@@ -4,7 +4,7 @@ import { formatCurrency, getImageUrl } from './utils.js';
 
 let inventarioGlobal = [];
 let variantesTemporales = [];
-let imagenesTemporales = [];
+let imagenesTemporales = []; // Objects: { type: 'file'|'url', data: File|string, preview: string }
 
 export async function cargarInventario() {
     if (!window.location.pathname.endsWith('stock.html')) return;
@@ -199,25 +199,10 @@ export function previsualizarImagenes(files) {
             return;
         }
 
-        imagenesTemporales.push(file);
         const reader = new FileReader();
         reader.onload = (e) => {
-            const index = imagenesTemporales.length - 1;
-            const thumb = document.createElement('div');
-            thumb.className = 'position-relative';
-            thumb.style.cssText = 'width:100px; height:100px; border-radius:8px; overflow:hidden; transition:transform 0.2s;';
-            thumb.id = `thumb-${index}`;
-            thumb.innerHTML = `
-                <img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">
-                <button type="button" class="btn btn-sm position-absolute top-0 end-0 m-1 p-0 d-flex align-items-center justify-content-center"
-                        style="width:22px; height:22px; background:rgba(180,19,64,0.85); border-radius:50%; border:none;"
-                        onclick="quitarImagenTemporal(${index})"
-                        title="Quitar">
-                    <i class="bi bi-x text-white" style="font-size:14px;"></i>
-                </button>
-                ${index === 0 ? '<span class="position-absolute bottom-0 start-0 badge bg-primary m-1" style="font-size:0.6rem;">Principal</span>' : ''}
-            `;
-            container.appendChild(thumb);
+            imagenesTemporales.push({ type: 'file', data: file, preview: e.target.result });
+            renderGaleriaPreview();
         };
         reader.readAsDataURL(file);
     });
@@ -225,35 +210,58 @@ export function previsualizarImagenes(files) {
     document.getElementById('inputImagenes').value = '';
 }
 
-export function quitarImagenTemporal(index) {
-    imagenesTemporales.splice(index, 1);
-    renderGaleriaPreviewLocal();
+export function agregarImagenPorUrl() {
+    const input = document.getElementById('inputUrlImagen');
+    const url = input.value.trim();
+    
+    if (!url) {
+        alert('Ingresa una URL de imagen');
+        return;
+    }
+
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+    const hasValidExt = validExtensions.some(ext => url.toLowerCase().endsWith(ext));
+    
+    if (!hasValidExt) {
+        alert('La URL debe ser una imagen válida (JPEG, PNG, WebP o GIF)');
+        return;
+    }
+
+    imagenesTemporales.push({ type: 'url', data: url, preview: url });
+    input.value = '';
+    renderGaleriaPreview();
 }
 
-export function renderGaleriaPreviewLocal() {
+export function renderGaleriaPreview() {
     const container = document.getElementById('galeriaPreview');
     if (!container) return;
     container.innerHTML = '';
 
-    imagenesTemporales.forEach((file, idx) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const thumb = document.createElement('div');
-            thumb.className = 'position-relative';
-            thumb.style.cssText = 'width:100px; height:100px; border-radius:8px; overflow:hidden;';
-            thumb.innerHTML = `
-                <img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">
-                <button type="button" class="btn btn-sm position-absolute top-0 end-0 m-1 p-0 d-flex align-items-center justify-content-center"
-                        style="width:22px; height:22px; background:rgba(180,19,64,0.85); border-radius:50%; border:none;"
-                        onclick="quitarImagenTemporal(${idx})" title="Quitar">
-                    <i class="bi bi-x text-white" style="font-size:14px;"></i>
-                </button>
-                ${idx === 0 ? '<span class="position-absolute bottom-0 start-0 badge bg-primary m-1" style="font-size:0.6rem;">Principal</span>' : ''}
-            `;
-            container.appendChild(thumb);
-        };
-        reader.readAsDataURL(file);
+    imagenesTemporales.forEach((img, idx) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'position-relative';
+        thumb.style.cssText = 'width:100px; height:100px; border-radius:8px; overflow:hidden;';
+        
+        const isUrl = img.type === 'url';
+        const sourceLabel = isUrl ? '<span class="position-absolute top-0 start-0 badge bg-info m-1" style="font-size:0.5rem;">URL</span>' : '';
+        
+        thumb.innerHTML = `
+            <img src="${img.preview}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext fill=%22%23999%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3EError%3C/text%3E%3C/svg%3E'">
+            ${sourceLabel}
+            <button type="button" class="btn btn-sm position-absolute top-0 end-0 m-1 p-0 d-flex align-items-center justify-content-center"
+                    style="width:22px; height:22px; background:rgba(180,19,64,0.85); border-radius:50%; border:none;"
+                    onclick="quitarImagenTemporal(${idx})" title="Quitar">
+                <i class="bi bi-x text-white" style="font-size:14px;"></i>
+            </button>
+            ${idx === 0 ? '<span class="position-absolute bottom-0 start-0 badge bg-primary m-1" style="font-size:0.6rem;">Principal</span>' : ''}
+        `;
+        container.appendChild(thumb);
     });
+}
+
+export function quitarImagenTemporal(index) {
+    imagenesTemporales.splice(index, 1);
+    renderGaleriaPreview();
 }
 
 export function limpiarGaleriaPreview() {
@@ -263,19 +271,41 @@ export function limpiarGaleriaPreview() {
 }
 
 export async function subirImagenesAlProducto(productoId) {
-    const formData = new FormData();
-    imagenesTemporales.forEach(file => formData.append('imagenes', file));
-
     const token = localStorage.getItem('cz_token');
+    
+    const files = imagenesTemporales.filter(img => img.type === 'file');
+    const urls = imagenesTemporales.filter(img => img.type === 'url');
+    
     try {
-        const response = await fetch(`${API_URL}/productos/${productoId}/imagenes`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Error subiendo imágenes');
-        console.log(`${data.imagenes.length} imagen(es) subida(s) al producto ${productoId}`);
+        if (files.length > 0) {
+            const formData = new FormData();
+            files.forEach(img => formData.append('imagenes', img.data));
+            
+            const response = await fetch(`${API_URL}/productos/${productoId}/imagenes`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Error subiendo imágenes');
+            console.log(`${data.imagenes.length} imagen(es) subida(s) al producto ${productoId}`);
+        }
+        
+        if (urls.length > 0) {
+            for (const img of urls) {
+                const response = await fetch(`${API_URL}/productos/${productoId}/imagenes-url`, {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: img.data })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Error subiendo imagen por URL');
+            }
+            console.log(`${urls.length} imagen(es) por URL subida(s) al producto ${productoId}`);
+        }
     } catch (err) {
         console.error('Error subiendo imágenes:', err);
         alert('El producto se guardó, pero hubo un error subiendo las imágenes: ' + err.message);
@@ -398,8 +428,9 @@ window.agregarVarianteTemporal = agregarVarianteTemporal;
 window.renderVariantesTemp = renderVariantesTemp;
 window.handleDrop = handleDrop;
 window.previsualizarImagenes = previsualizarImagenes;
+window.agregarImagenPorUrl = agregarImagenPorUrl;
 window.quitarImagenTemporal = quitarImagenTemporal;
-window.renderGaleriaPreviewLocal = renderGaleriaPreviewLocal;
+window.renderGaleriaPreview = renderGaleriaPreview;
 window.limpiarGaleriaPreview = limpiarGaleriaPreview;
 window.subirImagenesAlProducto = subirImagenesAlProducto;
 window.abrirModalAjustarStock = abrirModalAjustarStock;

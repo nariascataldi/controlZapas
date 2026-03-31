@@ -70,6 +70,50 @@ router.post('/:id/imagenes', verificarToken, soloAdmin, upload.array('imagenes',
     }
 });
 
+router.post('/:id/imagenes-url', verificarToken, soloAdmin, async (req, res) => {
+    const { url } = req.body;
+    const productoId = parseInt(req.params.id);
+
+    if (!url) {
+        return res.status(400).json({ error: 'URL de imagen requerida' });
+    }
+
+    try {
+        const producto = await prisma.producto.findUnique({ where: { id: productoId } });
+        if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+
+        const countResult = await prisma.productoImagen.count({ where: { productoId } });
+        const esPrimera = countResult === 0;
+
+        const maxOrden = await prisma.productoImagen.aggregate({
+            where: { productoId },
+            _max: { orden: true }
+        });
+
+        const imagen = await prisma.productoImagen.create({
+            data: {
+                productoId,
+                nombreArchivo: url.split('/').pop() || 'imagen-url',
+                ruta: url,
+                publicId: null,
+                esPrincipal: esPrimera,
+                orden: (maxOrden._max.orden || 0) + 1
+            }
+        });
+
+        res.status(201).json({
+            message: 'Imagen por URL agregada',
+            imagen: {
+                nombre_archivo: imagen.nombreArchivo,
+                ruta: imagen.ruta,
+                es_principal: imagen.esPrincipal
+            }
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
 router.put('/:id/imagenes/:imgId/principal', verificarToken, soloAdmin, async (req, res) => {
     const productoId = parseInt(req.params.id);
     const imgId = parseInt(req.params.imgId);
