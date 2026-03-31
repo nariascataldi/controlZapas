@@ -701,6 +701,52 @@ window.confirmarAjustarStock = confirmarAjustarStock;
 window.verGaleriaStock = verGaleriaStock;
 window.eliminarVariante = eliminarVariante;
 window.generarLinkWhatsapp = generarLinkWhatsapp;
+window.exportarInventario = exportarInventario;
+
+function descargarArchivo(url, filename) {
+    const token = localStorage.getItem('cz_token');
+    fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Error en descarga');
+        return res.blob();
+    })
+    .then(blob => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(a);
+    })
+    .catch(err => {
+        console.error('Error descargando:', err);
+        alert('Error al exportar: ' + err.message);
+    });
+}
+
+export function exportarInventario(tipo) {
+    const search = document.getElementById('busquedaStock').value;
+    
+    const activeSizeButtons = document.querySelectorAll('.btn-size-filter.active');
+    const selectedSizes = Array.from(activeSizeButtons).map(btn => btn.dataset.size);
+    const tieneTodas = selectedSizes.includes('all');
+    const tallasParam = tieneTodas ? '' : selectedSizes.filter(s => s !== 'all').join(',');
+    
+    const extensions = { excel: 'xlsx', csv: 'csv', pdf: 'pdf' };
+    const ext = extensions[tipo] || tipo;
+    const filename = `Inventario_controlZapas_${new Date().toISOString().split('T')[0]}.${ext}`;
+    
+    const query = new URLSearchParams({
+        search: search || '',
+        talla: tallasParam
+    });
+    
+    descargarArchivo(`${API_URL}/export/inventario/${tipo}?${query}`, filename);
+}
 
 // Exponer variables de estado para el onclick del HTML
 window.inventarioGlobal = inventarioGlobal;
