@@ -419,20 +419,12 @@ router.get('/pdf', verificarToken, async (req, res) => {
 async function getFilteredInventario(user, filters) {
     const { search, talla } = filters;
     
-    console.log('🔍 [DEBUG] getFilteredInventario - filtros:', filters);
-    
     const variantes = await prisma.variante.findMany({
         include: {
             producto: true
         },
         orderBy: { producto: { nombre: 'asc' } }
     });
-    
-    console.log('🔍 [DEBUG] variantes obtenidas:', variantes.length);
-    if (variantes.length > 0) {
-        console.log('🔍 [DEBUG] primera variante:', JSON.stringify(variantes[0]));
-        console.log('🔍 [DEBUG] producto de primera variante:', JSON.stringify(variantes[0]?.producto));
-    }
     
     let filtered = variantes.map(v => ({
         id: v.id,
@@ -446,8 +438,6 @@ async function getFilteredInventario(user, filters) {
         stock_actual: v.stockActual,
         stock_minimo: v.stockMinimo || 0
     }));
-    
-    console.log('🔍 [DEBUG] filtered inventario (primera fila):', filtered[0]);
     
     if (search) {
         const searchLower = search.toLowerCase();
@@ -474,8 +464,6 @@ router.get('/inventario/csv', verificarToken, async (req, res) => {
     try {
         const inventario = await getFilteredInventario(req.user, req.query);
         
-        console.log('🔍 [CSV] inventario obtenido:', inventario.length, 'items');
-        
         let csv = 'Producto,Marca,Color,Talla,SKU,Precio Mayorista,Precio Minorista,Stock Actual,Stock Mínimo\n';
         inventario.forEach(i => {
             csv += `"${i.producto}","${i.marca}","${i.color}","${i.talla}","${i.sku}",${i.precio_mayorista},${i.precio_minorista},${i.stock_actual},${i.stock_minimo}\n`;
@@ -496,8 +484,6 @@ router.get('/inventario/csv', verificarToken, async (req, res) => {
 router.get('/inventario/excel', verificarToken, async (req, res) => {
     try {
         const inventario = await getFilteredInventario(req.user, req.query);
-        
-        console.log('🔍 [EXCEL] inventario obtenido:', inventario.length, 'items');
         
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Inventario');
@@ -573,9 +559,6 @@ router.get('/inventario/pdf', verificarToken, async (req, res) => {
     try {
         const inventario = await getFilteredInventario(req.user, req.query);
         
-        console.log('🔍 [PDF] inventario obtenido:', inventario.length, 'items');
-        console.log('🔍 [PDF] primer item:', inventario[0]);
-        
         const doc = new PDFDocument({ margin: 25, size: 'A4' });
         
         res.setHeader('Content-Type', 'application/pdf');
@@ -615,9 +598,6 @@ router.get('/inventario/pdf', verificarToken, async (req, res) => {
         const colWidths = [70, 40, 30, 15, 55, 40, 40, 25, 25];
         const headers = ['Producto', 'Marca', 'Color', 'Talla', 'SKU', 'P. Mayor', 'P. Minor', 'Stock', 'Mín'];
         
-        console.log('🔍 [PDF] Headers:', headers);
-        console.log('🔍 [PDF] colWidths:', colWidths);
-        
         doc.rect(startX, startY - 5, pageWidth, 18).fill('#F5F6F7');
         doc.fillColor('#595C5D').fontSize(8).font('Helvetica-Bold');
         
@@ -630,11 +610,7 @@ router.get('/inventario/pdf', verificarToken, async (req, res) => {
         startY += 18;
         doc.fillColor('#2C2F30').font('Helvetica');
         
-        console.log('🔍 [PDF] Antes del forEach, inventario tiene:', inventario.length);
-        
         inventario.forEach((i, index) => {
-            console.log(`🔍 [PDF] Iterando item ${index}:`, JSON.stringify(i));
-            
             if (startY > 750) {
                 doc.addPage({ margin: 25, size: 'A4' });
                 startY = 40;
@@ -690,15 +666,11 @@ router.get('/inventario/pdf', verificarToken, async (req, res) => {
             startY += 14;
         });
         
-        console.log('🔍 [PDF] Finalizado el forEach, startY:', startY);
-        
         startY += 10;
         doc.rect(startX, startY, pageWidth, 20).fill('#0049E6');
         doc.fillColor('#FFFFFF').fontSize(10).font('Helvetica-Bold');
         doc.text(`controlZapas - Generado: ${fechaExport}`, startX + 10, startY + 6);
         doc.text(`Total: ${inventario.length} SKUs (${totalUnidades} unidades)`, startX + pageWidth - 220, startY + 6);
-        
-        console.log('🔍 [PDF] Finalizando PDF...');
         
         doc.end();
     } catch (e) {
