@@ -615,6 +615,9 @@ router.get('/inventario/pdf', verificarToken, async (req, res) => {
         const colWidths = [70, 40, 30, 15, 55, 40, 40, 25, 25];
         const headers = ['Producto', 'Marca', 'Color', 'Talla', 'SKU', 'P. Mayor', 'P. Minor', 'Stock', 'Mín'];
         
+        console.log('🔍 [PDF] Headers:', headers);
+        console.log('🔍 [PDF] colWidths:', colWidths);
+        
         doc.rect(startX, startY - 5, pageWidth, 18).fill('#F5F6F7');
         doc.fillColor('#595C5D').fontSize(8).font('Helvetica-Bold');
         
@@ -627,8 +630,10 @@ router.get('/inventario/pdf', verificarToken, async (req, res) => {
         startY += 18;
         doc.fillColor('#2C2F30').font('Helvetica');
         
+        console.log('🔍 [PDF] Antes del forEach, inventario tiene:', inventario.length);
+        
         inventario.forEach((i, index) => {
-            console.log(`🔍 [PDF] escribiendo item ${index}:`, i.producto, i.marca);
+            console.log(`🔍 [PDF] Iterando item ${index}:`, JSON.stringify(i));
             
             if (startY > 750) {
                 doc.addPage({ margin: 25, size: 'A4' });
@@ -683,6 +688,8 @@ router.get('/inventario/pdf', verificarToken, async (req, res) => {
             
             startY += 14;
         });
+        
+        console.log('🔍 [PDF] Finalizado el forEach, startY:', startY);
         
         startY += 10;
         doc.rect(startX, startY, pageWidth, 20).fill('#0049E6');
