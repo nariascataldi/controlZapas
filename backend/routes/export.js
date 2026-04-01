@@ -658,6 +658,7 @@ router.get('/inventario/pdf', verificarToken, async (req, res) => {
             
             currentX = startX;
             doc.fontSize(7);
+            doc.fillColor('#2C2F30');
             
             const producto = (i.producto || '-').substring(0, 20);
             doc.text(producto, currentX + 2, startY, { width: colWidths[0] - 4 });
