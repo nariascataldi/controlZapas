@@ -433,8 +433,8 @@ async function getFilteredInventario(user, filters) {
         color: v.color || '-',
         talla: v.talla,
         sku: v.sku || '-',
-        precio_mayorista: v.producto?.precio_mayorista || 0,
-        precio_minorista: v.producto?.precio_minorista || 0,
+        precio_mayorista: v.producto?.precioMayorista || 0,
+        precio_minorista: v.producto?.precioMinorista || 0,
         stock_actual: v.stock_actual,
         stock_minimo: v.stock_minimo || 0
     }));
