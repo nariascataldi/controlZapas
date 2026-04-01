@@ -419,12 +419,20 @@ router.get('/pdf', verificarToken, async (req, res) => {
 async function getFilteredInventario(user, filters) {
     const { search, talla } = filters;
     
+    console.log('🔍 [DEBUG] getFilteredInventario - filtros:', filters);
+    
     const variantes = await prisma.variante.findMany({
         include: {
             producto: true
         },
         orderBy: { producto: { nombre: 'asc' } }
     });
+    
+    console.log('🔍 [DEBUG] variantes obtenidas:', variantes.length);
+    if (variantes.length > 0) {
+        console.log('🔍 [DEBUG] primera variante:', JSON.stringify(variantes[0]));
+        console.log('🔍 [DEBUG] producto de primera variante:', JSON.stringify(variantes[0]?.producto));
+    }
     
     let filtered = variantes.map(v => ({
         id: v.id,
@@ -435,9 +443,11 @@ async function getFilteredInventario(user, filters) {
         sku: v.sku || '-',
         precio_mayorista: v.producto?.precioMayorista || 0,
         precio_minorista: v.producto?.precioMinorista || 0,
-        stock_actual: v.stock_actual,
-        stock_minimo: v.stock_minimo || 0
+        stock_actual: v.stockActual,
+        stock_minimo: v.stockMinimo || 0
     }));
+    
+    console.log('🔍 [DEBUG] filtered inventario (primera fila):', filtered[0]);
     
     if (search) {
         const searchLower = search.toLowerCase();
