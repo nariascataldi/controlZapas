@@ -5,6 +5,9 @@ on:
     branches: [main, develop, feature/*, fix/*]
   pull_request:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -15,14 +18,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
       
+      - name: Generate Prisma Client
+        working-directory: backend
+        run: npx prisma generate
+        
       - name: Install dependencies
         working-directory: backend
         run: npm ci
-        
+      
       - name: Run tests
         working-directory: backend
         run: npm test
