@@ -1,5 +1,10 @@
 export function formatCurrency(amount) {
-    return new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'UYU' }).format(amount);
+    return new Intl.NumberFormat('es-AR', { 
+        style: 'currency', 
+        currency: 'ARS',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount);
 }
 
 export function getImageUrl(ruta, apiUrl = '') {

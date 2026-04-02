@@ -950,3 +950,339 @@ body.login-page {
   background-color: #fff;
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
 }
+
+/* ============================================
+   RESPONSIVE MOBILE - CELULARES
+   ============================================ */
+
+@media (max-width: 575px) {
+  /* Body y Tipografía */
+  body {
+    font-size: 14px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  h1, .fs-2 { font-size: 1.5rem !important; }
+  h2, .fs-3 { font-size: 1.25rem !important; }
+  h3, .fs-4 { font-size: 1.1rem !important; }
+  h4, .fs-5 { font-size: 1rem !important; }
+
+  /* Navbar */
+  .glass-nav {
+    padding: 0.75rem !important;
+    border-radius: 0.75rem !important;
+  }
+
+  .navbar-brand {
+    font-size: 1rem !important;
+  }
+
+  .navbar-brand .badge {
+    display: none !important;
+  }
+
+  /* KPI Cards */
+  .kpi-card {
+    padding: 1rem !important;
+  }
+
+  .kpi-label {
+    font-size: 0.75rem;
+  }
+
+  .kpi-val {
+    font-size: 1.25rem !important;
+  }
+
+  .kpi-icon {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1rem !important;
+  }
+
+  /* Tarjetas */
+  .card {
+    border-radius: 0.75rem !important;
+    margin-bottom: 1rem;
+  }
+
+  .card-body {
+    padding: 1rem !important;
+  }
+
+  /* Dashboard Header */
+  .dashboard-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem;
+  }
+
+  .dashboard-header h1 {
+    margin-bottom: 0.25rem !important;
+  }
+
+  /* Botones */
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .btn-lg {
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .btn-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  /* Inputs */
+  .form-control, .form-select {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .form-control-lg {
+    font-size: 1rem !important;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Scanner POS */
+  .scanner-input .input-group-lg {
+    flex-wrap: nowrap;
+  }
+
+  .scanner-input .input-group-text {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .scanner-input input {
+    font-size: 0.9rem !important;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Grilla Productos POS */
+  #posResultados {
+    gap: 0.75rem !important;
+  }
+
+  .mobile-product-card {
+    padding: 0.75rem;
+  }
+
+  .mobile-product-card .fw-bold {
+    font-size: 0.9rem;
+  }
+
+  .mobile-product-card .text-muted {
+    font-size: 0.75rem;
+  }
+
+  /* Carrito */
+  .cart-summary {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    border-radius: 0;
+    padding: 1rem;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+  }
+
+  .cart-items-container {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  /* Tablas */
+  .table {
+    font-size: 0.8rem;
+  }
+
+  .table th, .table td {
+    padding: 0.5rem 0.35rem !important;
+  }
+
+  .data-table {
+    font-size: 0.8rem;
+  }
+
+  .data-table thead th {
+    font-size: 0.7rem;
+    padding: 0.5rem 0.35rem;
+  }
+
+  .data-table tbody td {
+    padding: 0.5rem 0.35rem;
+  }
+
+  /* Badges */
+  .badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  /* Modales */
+  .modal-content {
+    border-radius: 0.75rem;
+    margin: 0.5rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  /* Filtros Historial */
+  .filter-section {
+    padding: 1rem !important;
+  }
+
+  .filter-section .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Pagination */
+  .pagination {
+    gap: 0.25rem;
+  }
+
+  .page-link {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.8rem;
+  }
+
+  /* Margins y Paddings */
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .g-4 {
+    --bs-gutter-x: 0.75rem;
+    --bs-gutter-y: 0.75rem;
+  }
+
+  .row {
+    --bs-gutter-x: 0.75rem;
+  }
+
+  /* Iconos */
+  .bi {
+    font-size: 1rem;
+  }
+
+  .bi.fs-1, .bi.fs-2, .bi.fs-3, .bi.fs-4, .bi.fs-5 {
+    font-size: 1.5rem;
+  }
+}
+
+/* ============================================
+   RESPONSIVE TABLETS Y MÓVIL HORIZONTAL
+   ============================================ */
+
+@media (min-width: 576px) and (max-width: 767px) {
+  .kpi-val {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-header {
+    flex-direction: row;
+  }
+
+  #posResultados {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================
+   MEJORAS GENERALES RESPONSIVE
+   ============================================ */
+
+/* Touch-friendly inputs */
+input[type="number"],
+input[type="search"],
+input[type="text"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevenir zoom en inputs iOS */
+@supports (-webkit-touch-callout: none) {
+  input[type="text"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Scroll suave */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Evitar overflow horizontal */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Grid de productos responsive */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+@media (max-width: 575px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+}
+
+/* KPI Grid responsive */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 767px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 575px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Navbar collapse animation */
+.navbar-collapse {
+  transition: all 0.3s ease;
+}
+
+/* Floating action button para móvil */
+.fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  box-shadow: 0 4px 20px rgba(0,73,230,0.3);
+  z-index: 999;
+  display: none;
+}
+
+@media (max-width: 575px) {
+  .fab {
+    display: flex;
+  }
+}
