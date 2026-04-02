@@ -30,3 +30,18 @@ Docu.md
 # Testing
 backend/coverage/
 backend/*.txt
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Uploads (imágenes de productos - locales)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
