@@ -9,10 +9,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({
-    origin: true,
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+        ? ['https://controlzapas.onrender.com', 'https://controlzapas-api.onrender.com']
+        : true,
     credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

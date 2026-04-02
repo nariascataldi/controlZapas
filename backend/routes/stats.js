@@ -125,4 +125,64 @@ router.get('/top-productos', verificarToken, soloAdmin, async (req, res) => {
     }
 });
 
+router.get('/inventario', verificarToken, async (req, res) => {
+    try {
+        const esAdmin = req.usuario?.rol === 'ADMIN';
+        
+        // Si es vendedor, solo devolver rotación (dato no sensible)
+        if (!esAdmin) {
+            const hace30dias = new Date();
+            hace30dias.setDate(hace30dias.getDate() - 30);
+            
+            const [variantes, ventasUltimoMes] = await Promise.all([
+                prisma.variante.count(),
+                prisma.ventaDetalle.findMany({
+                    where: { venta: { fecha: { gte: hace30dias } } }
+                })
+            ]);
+            
+            const unidadesVendidas = ventasUltimoMes.reduce((sum, d) => sum + d.cantidad, 0);
+            const rotacion = variantes > 0 ? (unidadesVendidas / variantes).toFixed(1) : 0;
+            
+            return res.json({ rotacion: parseFloat(rotacion) });
+        }
+        
+        // Si es admin, devolver todos los datos
+        const variantes = await prisma.variante.findMany({
+            include: { producto: true }
+        });
+
+        const totalSku = variantes.length;
+        
+        const valorInventario = variantes.reduce((sum, v) => {
+            const precio = v.producto?.precioMayorista || v.producto?.precioMinorista || 0;
+            return sum + (v.stockActual * precio);
+        }, 0);
+
+        const stockBajo = variantes.filter(v => v.stockActual <= v.stockMinimo).length;
+
+        const hace30dias = new Date();
+        hace30dias.setDate(hace30dias.getDate() - 30);
+        
+        const ventasUltimoMes = await prisma.ventaDetalle.findMany({
+            where: {
+                venta: { fecha: { gte: hace30dias } }
+            }
+        });
+        
+        const unidadesVendidas = ventasUltimoMes.reduce((sum, d) => sum + d.cantidad, 0);
+        const rotacion = totalSku > 0 ? (unidadesVendidas / totalSku).toFixed(1) : 0;
+
+        res.json({
+            totalSku,
+            valorInventario: Math.round(valorInventario * 100) / 100,
+            stockBajo,
+            rotacion: parseFloat(rotacion)
+        });
+    } catch (error) {
+        console.error('Error calculando stats inventario:', error);
+        res.status(500).json({ error: 'Error interno obteniendo stats de inventario' });
+    }
+});
+
 module.exports = router;
