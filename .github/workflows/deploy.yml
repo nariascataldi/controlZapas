@@ -23,6 +23,10 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm ci
+      
+      - name: Generate Prisma Client
+        working-directory: backend
+        run: npx prisma generate
         
       - name: Run tests
         working-directory: backend
@@ -43,11 +47,9 @@ jobs:
       - name: Deploy to Render
         uses: jakejarvis/render-deploy-action@master
         with:
-          render-signup-url: https://dashboard.render.com
           render-service-type: web
-          render-service-name: controlzapas-api
+          render-service-name: controlZapas
           render-repo: ${{ github.repository }}
           override-branch: main
-          optional-deploy-branch: main
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
