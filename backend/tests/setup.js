@@ -1,4 +1,6 @@
-process.env.DATABASE_URL = "postgresql://nestorariascataldi@localhost:5432/controlzapas_test?schema=public";
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = "postgresql://postgres@localhost:5432/controlzapas_test?schema=public";
+}
 
 const prisma = require('../prisma');
 
