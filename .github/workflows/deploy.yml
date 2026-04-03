@@ -13,6 +13,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
     steps:
       - uses: actions/checkout@v4
       
@@ -30,12 +45,25 @@ jobs:
       - name: Generate Prisma Client
         working-directory: backend
         run: ./node_modules/.bin/prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/controlzapas_test?schema=public
+      
+      - name: Create test database
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -c "DROP DATABASE IF EXISTS controlzapas_test;"
+          PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE controlzapas_test;"
+      
+      - name: Apply Prisma migrations
+        working-directory: backend
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/controlzapas_test?schema=public
       
       - name: Run tests
         working-directory: backend
         run: npm test
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/controlzapas_test?schema=public
           JWT_SECRET: test_secret
           CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
 
