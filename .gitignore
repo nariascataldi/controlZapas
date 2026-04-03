@@ -35,6 +35,7 @@ backend/*.txt
 .env
 .env.local
 .env.production
+.env.example
 
 # Uploads (imágenes de productos - locales)
 backend/uploads/*
@@ -45,3 +46,9 @@ backend/uploads/*
 .idea/
 *.swp
 *.swo
+
+mcp_config.json
+
+# Testing
+test/
+*.txt
