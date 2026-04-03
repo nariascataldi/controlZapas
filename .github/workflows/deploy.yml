@@ -76,11 +76,8 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Deploy to Render
-        uses: jakejarvis/render-deploy-action@master
+        uses: johnbeynon/render-deploy-action@v0.0.8
         with:
-          render-service-type: web
-          render-service-name: controlZapas
-          render-repo: ${{ github.repository }}
-          override-branch: main
-        env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+          wait-for-success: true
