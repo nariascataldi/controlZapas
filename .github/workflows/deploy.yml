@@ -1,4 +1,4 @@
-name: Deploy to Render
+name: Deploy to Vercel
 
 on:
   push:
@@ -17,5 +17,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Deploy to Render
-        run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'

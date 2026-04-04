@@ -8,23 +8,43 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isVercel = process.env.VERCEL === '1';
+const vercelAppName = process.env.VERCEL_PROJECT_PRODUCTION_URL?.split('.')[0];
+
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:8080',
+    'https://controlzapas.onrender.com',
+    'https://controlzapas-api.onrender.com',
+];
+
+if (vercelAppName) {
+    allowedOrigins.push(`https://${vercelAppName}.vercel.app`);
+}
 
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production' 
-        ? ['https://controlzapas.onrender.com', 'https://controlzapas-api.onrender.com']
+        ? allowedOrigins
         : true,
     credentials: true
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use(express.static(path.join(__dirname, '../frontend')));
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
-});
+if (isVercel) {
+    app.use('/uploads', express.static(path.join(__dirname, '../frontend/uploads')));
+    app.use(express.static(path.join(__dirname, '../frontend')));
+    app.get('/', (req, res) => {
+        res.sendFile(path.join(__dirname, '../frontend/index.html'));
+    });
+} else {
+    app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+    app.use(express.static(path.join(__dirname, '../frontend')));
+    app.get('/', (req, res) => {
+        res.sendFile(path.join(__dirname, '../frontend/index.html'));
+    });
+}
 
 const prisma = require('./prisma');
 
@@ -60,12 +80,14 @@ app.use('/api/productos', require('./routes/imagenes'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/export', require('./routes/export'));
 
-if (require.main === module) {
-    crearAdminPorDefecto().then(() => {
-        app.listen(PORT, () => {
-            console.log(`Servidor de controlZapas corriendo en http://localhost:${PORT}`);
+if (!isVercel) {
+    if (require.main === module) {
+        crearAdminPorDefecto().then(() => {
+            app.listen(PORT, () => {
+                console.log(`Servidor de controlZapas corriendo en http://localhost:${PORT}`);
+            });
         });
-    });
+    }
+} else {
+    module.exports = app;
 }
-
-module.exports = app;
