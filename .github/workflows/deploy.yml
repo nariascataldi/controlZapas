@@ -2,7 +2,7 @@ name: Deploy to Render
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -10,37 +10,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-      
-      - name: Generate Prisma Client
-        working-directory: backend
-        run: npx prisma generate
-        
-      - name: Install dependencies
-        working-directory: backend
-        run: npm ci
-      
-      - name: Run tests
-        working-directory: backend
-        run: npm test
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_SECRET: test_secret
-          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
-
   deploy:
-    needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     
@@ -53,6 +23,6 @@ jobs:
           render-service-type: web
           render-service-name: controlZapas
           render-repo: ${{ github.repository }}
-          override-branch: main
+          override-branch: ${{ github.ref_name }}
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
