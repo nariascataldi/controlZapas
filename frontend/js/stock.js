@@ -22,12 +22,8 @@ export async function cargarStatsInventario() {
             colRotacion.classList.remove('col-lg-3');
             colRotacion.classList.add('col-lg-4', 'mx-auto');
         }
-    } else {
-        // Mostrar floating button para admin
-        document.querySelectorAll('.admin-only-float').forEach(el => {
-            el.style.display = 'block';
-        });
     }
+    // Para admin: no necesita display:block, las clases CSS d-none d-md-block manejan visibilidad
     
     try {
         const stats = await fetchAPI('/stats/inventario');
@@ -76,6 +72,22 @@ export async function cargarInventario() {
         // Toggle mobile/desktop layouts based on screen size
         handleLayoutToggle();
         window.addEventListener('resize', handleLayoutToggle);
+
+        // Fix accessibility: transfer focus before modal hides to avoid aria-hidden warning
+        ['modalNuevoProd', 'modalAjustarStock', 'modalGaleriaStock'].forEach(modalId => {
+            const modalEl = document.getElementById(modalId);
+            if (modalEl) {
+                modalEl.addEventListener('hide.bs.modal', function(e) {
+                    setTimeout(() => document.body.focus(), 50);
+                });
+                const closeBtn = modalEl.querySelector('.btn-close');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function() {
+                        setTimeout(() => this.blur(), 10);
+                    });
+                }
+            }
+        });
     } catch (e) { console.error(e); }
 }
 
@@ -244,7 +256,7 @@ export function renderStock(lista = inventarioGlobal) {
             <tr class="align-middle border-bottom border-light hover-bg-light transition-all ${disableClass}">
                 <td class="py-3 ps-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="stock-thumb bg-white rounded-3 shadow-sm border p-1" style="width: 50px; height: 50px; flex-shrink: 0;" data-item="${itemJson}">
+                        <div class="stock-thumb bg-white rounded-3 shadow-sm border p-1" style="width: 50px; height: 50px; flex-shrink: 0;" data-pid="${item.producto_id}" data-item="${itemJson}">
                             <div class="w-100 h-100 bg-light rounded-2 d-flex align-items-center justify-content-center text-muted">
                                 <i class="bi bi-box-seam"></i>
                             </div>
@@ -300,16 +312,9 @@ export async function cargarThumbsStock(lista) {
             const imgs = await fetchAPI('/productos/' + pid + '/imagenes');
             if (imgs && imgs.length > 0) {
                 const principal = imgs[0];
-                const thumbs = document.querySelectorAll('.stock-thumb');
+                const thumbs = document.querySelectorAll('.stock-thumb[data-pid="' + pid + '"]');
                 thumbs.forEach(thumb => {
-                    try {
-                        const cardItem = JSON.parse(thumb.dataset.item ? thumb.dataset.item.replace(/&quot;/g, '"') : '{}');
-                        if (cardItem.producto_id === pid) {
-                            thumb.innerHTML = '<img src="' + getImageUrl(principal.ruta, API_URL) + '" alt="thumb" class="rounded-2" style="width:100%;height:100%;object-fit:cover;">';
-                        }
-                    } catch (e) {
-                         console.error(e);
-                    }
+                    thumb.innerHTML = '<img src="' + getImageUrl(principal.ruta, API_URL) + '" alt="thumb" class="rounded-2" style="width:100%;height:100%;object-fit:cover;">';
                 });
             }
         } catch (e) { console.error('Error cargando thumb:', e); }
@@ -374,7 +379,7 @@ export function renderMobileStock(lista = inventarioGlobal) {
         container.innerHTML += `
             <article class="mobile-product-card">
                 <div class="d-flex gap-3">
-                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; flex-shrink: 0;">
+                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center stock-thumb" style="width: 80px; height: 80px; flex-shrink: 0;" data-pid="${item.producto_id}" data-item="${JSON.stringify(item).replace(/"/g, '&quot;')}">
                         <i class="bi bi-box-seam text-muted" style="font-size: 2rem;"></i>
                     </div>
                     <div class="flex-grow-1">
@@ -406,6 +411,8 @@ export function renderMobileStock(lista = inventarioGlobal) {
             </article>
         `;
     });
+
+    cargarThumbsStock(lista);
 }
 
 // Expose to window

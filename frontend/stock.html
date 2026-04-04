@@ -268,6 +268,9 @@
                         <button class="carousel-control-next" type="button" data-bs-target="#carouselGaleria" data-bs-slide="next">
                             <span class="carousel-control-next-icon"></span>
                         </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -304,16 +307,13 @@
 
     <!-- Mobile FAB (Floating Action Button) -->
     <button class="mobile-fab d-md-none position-fixed d-flex align-items-center justify-content-center" 
-            style="bottom: 5.5rem; right: 1.5rem; width: 56px; height: 56px; border-radius: 50%; border: none; background: var(--colorPrimary); color: white; box-shadow: 0 8px 24px rgba(0,73,230,0.35); z-index: 999;"
+            style="bottom: 5.5rem; right: 1.5rem; left: auto; width: 56px; height: 56px; border-radius: 50%; border: none; background: var(--colorPrimary); color: white; box-shadow: 0 8px 24px rgba(0,73,230,0.35); z-index: 1001;"
             data-bs-toggle="modal" data-bs-target="#modalNuevoProd">
         <i class="bi bi-plus-lg fs-4"></i>
     </button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Floating Quick Contact Button (Admin only) -->
-    <div class="position-fixed bottom-0 end-0 p-3 admin-only-float" style="z-index: 1000; margin-bottom: 2rem; margin-right: 2rem; display: none;">
+    <!-- Floating Quick Contact Button (Admin only - desktop only) -->
+    <div class="position-fixed bottom-0 end-0 p-3 admin-only-float d-none d-md-block" style="z-index: 1000; margin-bottom: 2rem; margin-right: 2rem;">
         <div class="d-flex align-items-center gap-3 bg-white rounded-4 p-3 shadow-lg" style="background: rgba(255,255,255,0.9) !important; backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5);">
             <button class="btn btn-success rounded-3 p-2" style="background: #10b981; border: none;">
                 <i class="bi bi-telephone-fill text-white"></i>
