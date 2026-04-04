@@ -24,6 +24,7 @@ backend/database.db
 # Agent files
 AGENT.md
 NESTORBOT_PROMPT.md
+responsive.md
 
 # Documentation archive
 Docu.md
@@ -54,6 +55,14 @@ test/
 *.txt
 screenshots/
 
-# Documentation
-responsive.md
+# Migration plans
+MIGRATION_SUPABASE.md
 VERIFICATION_REPORT.md
+
+# Scripts con credenciales
+scripts/
+backend/scripts/
+
+# Supabase local config (puede contener credenciales)
+supabase/.temp/
+supabase/config.toml
