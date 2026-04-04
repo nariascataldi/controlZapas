@@ -1261,6 +1261,62 @@ html, body {
   .kpi-grid {
     grid-template-columns: 1fr;
   }
+
+  /* Size Filters - Mobile */
+  .size-filter {
+    max-width: calc(100% - 50px);
+  }
+  .size-filter .btn-size-filter {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.7rem;
+  }
+  #clearSizeFilters {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+  }
+
+  /* Historial Filters - Mobile */
+  #filtersCollapse .row.g-3 {
+    --bs-gutter-x: 0.5rem;
+  }
+  #filtersCollapse .form-control-sm,
+  #filtersCollapse .form-select-sm {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  #filtersCollapse label.meta-label {
+    font-size: 0.65rem;
+    margin-bottom: 0.1rem;
+  }
+
+  /* Ventas - Mobile */
+  #posBuscador {
+    font-size: 0.9rem !important;
+  }
+  .scanner-input .input-group-lg {
+    --bs-input-height: 2.5rem;
+  }
+
+  /* Ventas Form Fields - Mobile */
+  .pos-form-row {
+    flex-wrap: wrap;
+  }
+  .pos-form-row > div {
+    min-width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  .pos-form-row .btn-confirm-sale {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 0;
+    z-index: 100;
+    padding: 1rem;
+  }
+  body {
+    padding-bottom: 80px;
+  }
 }
 
 /* Navbar collapse animation */

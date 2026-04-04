@@ -52,3 +52,8 @@ mcp_config.json
 # Testing
 test/
 *.txt
+screenshots/
+
+# Documentation
+responsive.md
+VERIFICATION_REPORT.md
