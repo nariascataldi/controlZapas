@@ -15,13 +15,21 @@ afterAll(async () => {
 });
 
 global.clearDatabase = async () => {
-  await prisma.$transaction([
-    prisma.ventaDetalle.deleteMany(),
-    prisma.venta.deleteMany(),
-    prisma.productoImagen.deleteMany(),
-    prisma.variante.deleteMany(),
-    prisma.producto.deleteMany(),
-    prisma.cliente.deleteMany(),
-    prisma.usuario.deleteMany({ where: { nombre: { not: 'admin' } } })
-  ]);
+  const models = ['ventaDetalle', 'venta', 'productoImagen', 'variante', 'producto', 'cliente'];
+  for (const model of models) {
+    try {
+      if (prisma[model]?.deleteMany) {
+        await prisma[model].deleteMany();
+      }
+    } catch (e) {
+      // Ignore errors in test cleanup
+    }
+  }
+  try {
+    await prisma.usuario.deleteMany({ 
+      where: { nombre: { not: 'admin' } } 
+    });
+  } catch (e) {
+    // Ignore
+  }
 };

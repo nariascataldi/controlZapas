@@ -5,14 +5,15 @@ const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-function mapToPrisma(result, error) {
-  if (error) throw error;
-  return result;
+let supabase = null;
+if (supabaseUrl && supabaseServiceKey) {
+  supabase = createClient(supabaseUrl, supabaseServiceKey);
+} else if (process.env.NODE_ENV !== 'test') {
+  console.warn('⚠️ Advertencia: SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY no definidos');
 }
 
-function transformResult(data) {
+function transformResult(data, error) {
+  if (error) throw error;
   if (!data) return null;
   if (Array.isArray(data)) {
     return data.map(item => transformSingle(item));
@@ -30,19 +31,40 @@ function transformSingle(item) {
   return transformed;
 }
 
+function transformToSnake(data) {
+  if (!data) return null;
+  if (Array.isArray(data)) {
+    return data.map(item => transformSingleToSnake(item));
+  }
+  return transformSingleToSnake(data);
+}
+
+function transformSingleToSnake(item) {
+  if (!item) return null;
+  const transformed = {};
+  for (const [key, value] of Object.entries(item)) {
+    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    transformed[snakeKey] = value;
+  }
+  return transformed;
+}
+
 const prisma = {
   usuario: {
     findUnique: async ({ where }) => {
+      if (!supabase) return null;
       const { data, error } = await supabase.from('usuarios').select('*').eq('nombre', where.nombre).single();
       return transformResult(data, error);
     },
     findFirst: async ({ where } = {}) => {
+      if (!supabase) return null;
       let query = supabase.from('usuarios').select('*');
       if (where?.id) query = query.eq('id', where.id);
       const { data, error } = await query.limit(1).single();
       return transformResult(data, error);
     },
     findMany: async ({ where } = {}) => {
+      if (!supabase) return [];
       let query = supabase.from('usuarios').select('*');
       if (where?.id) query = query.eq('id', where.id);
       if (where?.rol) query = query.eq('rol', where.rol);
@@ -50,30 +72,26 @@ const prisma = {
       return transformResult(data, error) || [];
     },
     create: async ({ data }) => {
-      const dataLower = {};
-      for (const [key, value] of Object.entries(data)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        dataLower[snakeKey] = value;
-      }
+      if (!supabase) return null;
+      const dataLower = transformToSnake(data);
       const { data: result, error } = await supabase.from('usuarios').insert(dataLower).select().single();
       return transformResult(result, error);
     },
     update: async ({ where, data }) => {
-      const dataLower = {};
-      for (const [key, value] of Object.entries(data)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        dataLower[snakeKey] = value;
-      }
+      if (!supabase) return null;
+      const dataLower = transformToSnake(data);
       const { data: result, error } = await supabase.from('usuarios').update(dataLower).eq('id', where.id).select().single();
       return transformResult(result, error);
     },
     delete: async ({ where }) => {
+      if (!supabase) return;
       const { error } = await supabase.from('usuarios').delete().eq('id', where.id);
       if (error) throw error;
     }
   },
   producto: {
     findMany: async ({ where, include } = {}) => {
+      if (!supabase) return [];
       let query = supabase.from('productos').select('*');
       if (where?.id) query = query.eq('id', where.id);
       if (where?.categoria) query = query.eq('categoria', where.categoria);
@@ -81,7 +99,7 @@ const prisma = {
       
       let result = transformResult(data, error) || [];
       
-      if (include?.variantes) {
+      if (include?.variantes && supabase) {
         const productosConVariantes = [];
         for (const producto of result) {
           const { data: variantes, error: varError } = await supabase
@@ -99,34 +117,31 @@ const prisma = {
       return result;
     },
     findUnique: async ({ where }) => {
+      if (!supabase) return null;
       const { data, error } = await supabase.from('productos').select('*').eq('id', where.id).single();
       return transformResult(data, error);
     },
     create: async ({ data }) => {
-      const dataLower = {};
-      for (const [key, value] of Object.entries(data)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        dataLower[snakeKey] = value;
-      }
+      if (!supabase) return null;
+      const dataLower = transformToSnake(data);
       const { data: result, error } = await supabase.from('productos').insert(dataLower).select().single();
       return transformResult(result, error);
     },
     update: async ({ where, data }) => {
-      const dataLower = {};
-      for (const [key, value] of Object.entries(data)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        dataLower[snakeKey] = value;
-      }
+      if (!supabase) return null;
+      const dataLower = transformToSnake(data);
       const { data: result, error } = await supabase.from('productos').update(dataLower).eq('id', where.id).select().single();
       return transformResult(result, error);
     },
     delete: async ({ where }) => {
+      if (!supabase) return;
       const { error } = await supabase.from('productos').delete().eq('id', where.id);
       if (error) throw error;
     }
   },
   variante: {
     findMany: async ({ where } = {}) => {
+      if (!supabase) return [];
       let query = supabase.from('variantes').select('*');
       if (where?.id) query = query.eq('id', where.id);
       if (where?.productoId) query = query.eq('producto_id', where.productoId);
@@ -135,64 +150,57 @@ const prisma = {
       return transformResult(data, error) || [];
     },
     findUnique: async ({ where }) => {
+      if (!supabase) return null;
       const { data, error } = where.sku 
         ? await supabase.from('variantes').select('*').eq('sku', where.sku).single()
         : await supabase.from('variantes').select('*').eq('id', where.id).single();
       return transformResult(data, error);
     },
     create: async ({ data }) => {
-      const dataLower = {};
-      for (const [key, value] of Object.entries(data)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        dataLower[snakeKey] = value;
-      }
+      if (!supabase) return null;
+      const dataLower = transformToSnake(data);
       const { data: result, error } = await supabase.from('variantes').insert(dataLower).select().single();
       return transformResult(result, error);
     },
     update: async ({ where, data }) => {
-      const dataLower = {};
-      for (const [key, value] of Object.entries(data)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        dataLower[snakeKey] = value;
-      }
+      if (!supabase) return null;
+      const dataLower = transformToSnake(data);
       const { data: result, error } = await supabase.from('variantes').update(dataLower).eq('id', where.id).select().single();
       return transformResult(result, error);
     },
     delete: async ({ where }) => {
+      if (!supabase) return;
       const { error } = await supabase.from('variantes').delete().eq('id', where.id);
       if (error) throw error;
     }
   },
   cliente: {
     findMany: async () => {
+      if (!supabase) return [];
       const { data, error } = await supabase.from('clientes').select('*');
       return transformResult(data, error) || [];
     },
     findUnique: async ({ where }) => {
+      if (!supabase) return null;
       const { data, error } = await supabase.from('clientes').select('*').eq('id', where.id).single();
       return transformResult(data, error);
     },
     create: async ({ data }) => {
-      const dataLower = {};
-      for (const [key, value] of Object.entries(data)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        dataLower[snakeKey] = value;
-      }
+      if (!supabase) return null;
+      const dataLower = transformToSnake(data);
       const { data: result, error } = await supabase.from('clientes').insert(dataLower).select().single();
       return transformResult(result, error);
     },
     update: async ({ where, data }) => {
-      const dataLower = {};
-      for (const [key, value] of Object.entries(data)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        dataLower[snakeKey] = value;
-      }
+      if (!supabase) return null;
+      const dataLower = transformToSnake(data);
       const { data: result, error } = await supabase.from('clientes').update(dataLower).eq('id', where.id).select().single();
       return transformResult(result, error);
     }
   },
   venta: {
     findMany: async ({ where } = {}) => {
+      if (!supabase) return [];
       let query = supabase.from('ventas').select('*');
       if (where?.id) query = query.eq('id', where.id);
       if (where?.vendedorId) query = query.eq('vendedor_id', where.vendedorId);
@@ -201,74 +209,75 @@ const prisma = {
       return transformResult(data, error) || [];
     },
     findUnique: async ({ where }) => {
+      if (!supabase) return null;
       const { data, error } = await supabase.from('ventas').select('*').eq('id', where.id).single();
       return transformResult(data, error);
     },
     create: async ({ data }) => {
-      const dataLower = {};
-      for (const [key, value] of Object.entries(data)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        dataLower[snakeKey] = value;
-      }
+      if (!supabase) return null;
+      const dataLower = transformToSnake(data);
       const { data: result, error } = await supabase.from('ventas').insert(dataLower).select().single();
       return transformResult(result, error);
     },
     update: async ({ where, data }) => {
-      const dataLower = {};
-      for (const [key, value] of Object.entries(data)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        dataLower[snakeKey] = value;
-      }
+      if (!supabase) return null;
+      const dataLower = transformToSnake(data);
       const { data: result, error } = await supabase.from('ventas').update(dataLower).eq('id', where.id).select().single();
       return transformResult(result, error);
+    },
+    deleteMany: async ({ where } = {}) => {
+      if (!supabase) return;
+      const { error } = await supabase.from('ventas').delete().neq('id', 0);
+      if (error && error.code !== 'PGRST116') throw error;
     }
   },
   ventaDetalle: {
     findMany: async ({ where } = {}) => {
+      if (!supabase) return [];
       let query = supabase.from('venta_detalles').select('*');
       if (where?.ventaId) query = query.eq('venta_id', where.ventaId);
       const { data, error } = await query;
       return transformResult(data, error) || [];
     },
     create: async ({ data }) => {
-      const dataLower = {};
-      for (const [key, value] of Object.entries(data)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        dataLower[snakeKey] = value;
-      }
-      const { data: result, error } = await supabase.from('venta_detalles').insert(dataLower).select();
+      if (!supabase) return null;
+      const dataLower = transformToSnake(data);
+      const { data: result, error } = await supabase.from('venta_detalles').insert(dataLower).select().single();
       return transformResult(result, error);
     },
     createMany: async ({ data }) => {
-      const dataLower = data.map(item => {
-        const obj = {};
-        for (const [key, value] of Object.entries(item)) {
-          const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-          obj[snakeKey] = value;
-        }
-        return obj;
-      });
+      if (!supabase) return;
+      const dataLower = data.map(item => transformSingleToSnake(item));
       const { error } = await supabase.from('venta_detalles').insert(dataLower);
       if (error) throw error;
+    },
+    deleteMany: async () => {
+      if (!supabase) return;
+      const { error } = await supabase.from('venta_detalles').delete().neq('id', 0);
+      if (error && error.code !== 'PGRST116') throw error;
     }
   },
   productoImagen: {
     findMany: async ({ where }) => {
+      if (!supabase) return [];
       const { data, error } = await supabase.from('producto_imagenes').select('*').eq('producto_id', where.productoId);
       return transformResult(data, error) || [];
     },
     create: async ({ data }) => {
-      const dataLower = {};
-      for (const [key, value] of Object.entries(data)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        dataLower[snakeKey] = value;
-      }
+      if (!supabase) return null;
+      const dataLower = transformToSnake(data);
       const { data: result, error } = await supabase.from('producto_imagenes').insert(dataLower).select().single();
       return transformResult(result, error);
     },
     delete: async ({ where }) => {
+      if (!supabase) return;
       const { error } = await supabase.from('producto_imagenes').delete().eq('id', where.id);
       if (error) throw error;
+    },
+    deleteMany: async () => {
+      if (!supabase) return;
+      const { error } = await supabase.from('producto_imagenes').delete().neq('id', 0);
+      if (error && error.code !== 'PGRST116') throw error;
     }
   },
   $transaction: async (callback) => {
