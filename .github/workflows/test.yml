@@ -55,11 +55,14 @@ jobs:
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/controlzapas_test?schema=public
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/controlzapas_test?schema=public
       
       - name: Run tests
         working-directory: backend
         run: npm test
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/controlzapas_test?schema=public
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/controlzapas_test?schema=public
           JWT_SECRET: test_secret
+          NODE_ENV: test
           CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
