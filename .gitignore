@@ -67,3 +67,7 @@ backend/scripts/
 # Supabase local config (puede contener credenciales)
 supabase/.temp/
 supabase/config.toml
+
+# Agent run logs
+runs.json
+run_logs.txt
