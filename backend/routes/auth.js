@@ -6,15 +6,18 @@ const db = require('../db');
 
 router.post('/login', async (req, res) => {
     const { nombre, password } = req.body;
+    console.log('Login attempt:', nombre);
 
     if (!nombre || !password) {
         return res.status(400).json({ error: 'Nombre de usuario y contraseña son requeridos' });
     }
 
     try {
+        console.log('Finding user...');
         const user = await db.usuario.findUnique({
             where: { nombre }
         });
+        console.log('User found:', !!user);
 
         if (!user) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
@@ -31,6 +34,7 @@ router.post('/login', async (req, res) => {
             { expiresIn: '12h' }
         );
 
+        console.log('Login successful:', user.nombre);
         res.json({
             token,
             usuario: {
@@ -41,6 +45,7 @@ router.post('/login', async (req, res) => {
             }
         });
     } catch (err) {
+        console.error('Login error:', err);
         return res.status(500).json({ error: 'Error en la base de datos' });
     }
 });

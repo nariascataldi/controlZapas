@@ -12,13 +12,13 @@
 <body class="bg-light pb-5">
 
     <div class="container mt-3 mb-4">
-        <nav class="navbar navbar-expand-lg rounded-4 glass-nav px-3 py-2">
+        <nav class="navbar navbar-expand-lg rounded-4 glass-nav px-3 py-2" aria-label="Navegación principal de Historial">
             <div class="container-fluid">
                 <a class="navbar-brand fw-bold color-primary" href="dashboard.html" id="navBrand">
-                    👟 controlZapas
+                    <span aria-hidden="true">👟</span> controlZapas
                 </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler" type="button" aria-label="Abrir menú de navegación" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon" aria-hidden="true"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto" id="navLinks"></ul>
@@ -26,7 +26,7 @@
         </nav>
     </div>
 
-    <div class="container mb-4">
+    <main class="container mb-4" id="main-content">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
             <div>
                 <h2 class="fw-bold mb-0">Historial de Ventas</h2>
@@ -64,23 +64,23 @@
                 <form id="formFiltros" class="row g-3">
                     <div class="col-12 col-md-3">
                         <label class="meta-label">ID Venta / Cliente</label>
-                        <input type="text" class="form-control form-control-sm" id="filtroSearch" placeholder="Buscar...">
+                        <input type="text" class="form-control form-control-sm" id="filtroSearch" aria-label="ID Venta o Cliente" placeholder="Buscar...">
                     </div>
                     <div class="col-12 col-md-3">
                         <label class="meta-label">Producto</label>
-                        <input type="text" class="form-control form-control-sm" id="filtroProducto" placeholder="Nombre de producto...">
+                        <input type="text" class="form-control form-control-sm" id="filtroProducto" aria-label="Nombre de producto" placeholder="Nombre de producto...">
                     </div>
                     <div class="col-6 col-md-2">
                         <label class="meta-label">Desde</label>
-                        <input type="date" class="form-control form-control-sm" id="filtroDesde">
+                        <input type="date" class="form-control form-control-sm" id="filtroDesde" aria-label="Fecha desde">
                     </div>
                     <div class="col-6 col-md-2">
                         <label class="meta-label">Hasta</label>
-                        <input type="date" class="form-control form-control-sm" id="filtroHasta">
+                        <input type="date" class="form-control form-control-sm" id="filtroHasta" aria-label="Fecha hasta">
                     </div>
                     <div class="col-6 col-md-2">
                         <label class="meta-label">Método de Pago</label>
-                        <select class="form-select form-select-sm" id="filtroMetodo">
+                        <select class="form-select form-select-sm" id="filtroMetodo" aria-label="Filtrar por método de pago">
                             <option value="">Todos</option>
                             <option value="Efectivo">Efectivo</option>
                             <option value="Transferencia">Transferencia</option>
@@ -89,7 +89,7 @@
                     </div>
                     <div class="col-6 col-md-2">
                         <label class="meta-label">Estado</label>
-                        <select class="form-select form-select-sm" id="filtroEstado">
+                        <select class="form-select form-select-sm" id="filtroEstado" aria-label="Filtrar por estado">
                             <option value="">Todos</option>
                             <option value="Pagado">Pagado</option>
                             <option value="Pendiente">Pendiente</option>
@@ -98,7 +98,7 @@
                     </div>
                     <div class="col-6 col-md-2" id="filtroVendedorContainer" style="display:none;">
                         <label class="meta-label">Vendedor</label>
-                        <select class="form-select form-select-sm" id="filtroVendedor">
+                        <select class="form-select form-select-sm" id="filtroVendedor" aria-label="Filtrar por vendedor">
                             <option value="">Todos</option>
                         </select>
                     </div>
@@ -106,8 +106,8 @@
                         <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
                             <i class="bi bi-search me-1"></i> Buscar
                         </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnLimpiarFiltros">
-                            <i class="bi bi-x-lg"></i>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnLimpiarFiltros" aria-label="Limpiar filtros">
+                            <i class="bi bi-x-lg" aria-hidden="true"></i>
                         </button>
                     </div>
                 </form>
@@ -120,7 +120,7 @@
                     <thead class="table-light sticky-header">
                         <tr>
                             <th class="text-center" style="width:40px;">
-                                <input type="checkbox" class="form-check-input" id="selectAll">
+                                <input type="checkbox" class="form-check-input" id="selectAll" aria-label="Seleccionar todos">
                             </th>
                             <th class="sortable" data-sort="id" data-column="v.id">
                                 # <i class="bi bi-chevron-expand sort-icon"></i>
@@ -158,7 +158,7 @@
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
                     <div class="d-flex align-items-center gap-3">
                         <label class="meta-label mb-0">Mostrar:</label>
-                        <select class="form-select form-select-sm" id="pageSize" style="width:auto;">
+                        <select class="form-select form-select-sm" id="pageSize" style="width:auto;" aria-label="Cantidad de registros por página">
                             <option value="10">10</option>
                             <option value="25" selected>25</option>
                             <option value="50">50</option>
@@ -184,30 +184,30 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalDetalleVenta" tabindex="-1">
+    <div class="modal fade" id="modalDetalleVenta" tabindex="-1" aria-labelledby="detVentaIdLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow">
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="fw-bold mb-0">Detalle de Venta #<span id="detVentaId"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="fw-bold mb-0" id="detVentaIdLabel">Detalle de Venta #<span id="detVentaId"></span></h5>
+                    <button type="button" class="btn-close" aria-label="Cerrar" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4" id="detVentaBody"></div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="modalEditarVenta" tabindex="-1">
+    <div class="modal fade" id="modalEditarVenta" tabindex="-1" aria-labelledby="editVentaIdLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow">
                 <div class="modal-header border-0">
-                    <h5 class="fw-bold mb-0">Editar Venta #<span id="editVentaId"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="fw-bold mb-0" id="editVentaIdLabel">Editar Venta #<span id="editVentaId"></span></h5>
+                    <button type="button" class="btn-close" aria-label="Cerrar" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <form id="formEditarVenta">
                         <div class="mb-3">
                             <label class="meta-label">Estado</label>
-                            <select class="form-select" id="editEstado">
+                            <select class="form-select" id="editEstado" aria-label="Estado de venta">
                                 <option value="Pagado">Pagado</option>
                                 <option value="Pendiente">Pendiente</option>
                                 <option value="Cancelado">Cancelado</option>
@@ -215,7 +215,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="meta-label">Método de Pago</label>
-                            <select class="form-select" id="editMetodoPago">
+                            <select class="form-select" id="editMetodoPago" aria-label="Método de pago">
                                 <option value="Efectivo">Efectivo</option>
                                 <option value="Transferencia">Transferencia</option>
                                 <option value="Tarjeta">Tarjeta</option>
@@ -231,12 +231,12 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1">
+    <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-labelledby="modalConfirmarEliminarLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content border-0 rounded-4 shadow">
                 <div class="modal-header border-0">
-                    <h5 class="fw-bold mb-0">Confirmar</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="fw-bold mb-0" id="modalConfirmarEliminarLabel">Confirmar</h5>
+                    <button type="button" class="btn-close" aria-label="Cerrar" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center p-4">
                     <i class="bi bi-exclamation-triangle-fill text-danger display-5"></i>
@@ -250,12 +250,12 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalImprimir" tabindex="-1">
+    <div class="modal fade" id="modalImprimir" tabindex="-1" aria-labelledby="modalImprimirLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow">
                 <div class="modal-header border-0">
-                    <h5 class="fw-bold mb-0"><i class="bi bi-printer me-2"></i>Imprimir Venta</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="fw-bold mb-0" id="modalImprimirLabel"><i class="bi bi-printer me-2" aria-hidden="true"></i>Imprimir Venta</h5>
+                    <button type="button" class="btn-close" aria-label="Cerrar" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center p-4">
                     <p>Se descargará un PDF con el detalle de la venta para imprimir.</p>
@@ -273,29 +273,12 @@
         <div id="toastMessage" class="toast align-items-center text-bg-primary border-0" role="alert">
             <div class="d-flex">
                 <div class="toast-body" id="toastBody"></div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" aria-label="Cerrar notificación" data-bs-dismiss="toast"></button>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="js/main.js"></script>
-    <script>
-        window.exportarVentas = (tipo) => {
-            if (window.historialModule && window.historialModule.exportar) {
-                window.historialModule.exportar(tipo);
-            }
-        };
-        window.cargarVentas = () => {
-            if (window.historialModule && window.historialModule.cargarVentas) {
-                window.historialModule.cargarVentas();
-            }
-        };
-        window.exportarSeleccionadas = () => {
-            if (window.historialModule && window.historialModule.exportarSeleccionadas) {
-                window.historialModule.exportarSeleccionadas();
-            }
-        };
-    </script>
 </body>
 </html>

@@ -11,9 +11,10 @@
 </head>
 <body class="login-page">
     
-    <div class="glass-container">
+    <main id="main-content" class="login-page">
+        <div class="glass-container" role="main" aria-label="Formulario de inicio de sesión">
         <div class="text-center mb-4">
-            <div class="logo-icon shadow-sm">
+            <div class="logo-icon mb-3" aria-hidden="true">
                 <i class="bi bi-box-fill"></i>
             </div>
             <h2 class="fw-bold text-dark mb-1 tracking-tight">controlZapas</h2>
@@ -26,15 +27,15 @@
         <form id="loginForm" class="login-form">
             <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="inputUser" placeholder="Usuario" required autocomplete="username">
-                <label for="inputUser"><i class="bi bi-person me-2"></i>Usuario</label>
+                <label for="inputUser"><i class="bi bi-person me-2" aria-hidden="true"></i>Usuario</label>
             </div>
             <div class="form-floating mb-4">
                 <input type="password" class="form-control" id="inputPassword" placeholder="Contraseña" required autocomplete="current-password">
-                <label for="inputPassword"><i class="bi bi-lock me-2"></i>Contraseña</label>
+                <label for="inputPassword"><i class="bi bi-lock me-2" aria-hidden="true"></i>Contraseña</label>
             </div>
 
-            <button class="btn btn-gradient w-100 mb-3" type="submit">
-                Ingresar al Sistema <i class="bi bi-arrow-right-short ms-1 fs-5 align-middle"></i>
+            <button class="btn btn-gradient w-100 py-3" type="submit">
+                Ingresar al Sistema <i class="bi bi-arrow-right-short ms-1 fs-5 align-middle" aria-hidden="true"></i>
             </button>
             
             <p class="text-center text-muted mb-0" style="font-size: 0.75rem;">
@@ -42,6 +43,7 @@
             </p>
         </form>
     </div>
+    </main>
 
     <script type="module" src="js/auth.js"></script>
 </body>

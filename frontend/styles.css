@@ -21,13 +21,14 @@
   --colorPrimaryContainer: #829bff;
   --colorPrimaryDim: #0040cb;
   --colorError: #b41340;          /* Alertas premium (no gritonas) */
+  --bg-gradient-primary: linear-gradient(135deg, #0049e6 0%, #002b8a 100%);
   
   --colorSurface: #f5f6f7;        /* Base canvas */
   --colorSurfaceLow: #eff1f2;     /* Bloques secundarios */
   --colorSurfaceLowest: #ffffff;  /* Tarjetas y modales (flotantes) */
   
-  --colorOnSurface: #2c2f30;      /* Texto principal */
-  --colorOnSurfaceVar: #595c5d;   /* Texto secundario (labels) */
+  --colorOnSurface: #1c1e1f;      /* Darker text for even better overall contrast */
+  --colorOnSurfaceVar: #4a4d4e;   /* Consistent secondary text */
   
   --shadowAmbient: 0 20px 40px rgba(12, 15, 16, 0.06); /* Sombra ultra difusa Stitch */
 }
@@ -43,6 +44,15 @@ body {
 .color-primary { color: var(--colorPrimary) !important; }
 .color-dark { color: var(--colorOnSurface) !important; }
 .text-muted { color: var(--colorOnSurfaceVar) !important; }
+.text-secondary { color: #5a5e60 !important; } /* Darkened for AA contrast */
+.nav-link.text-secondary { color: #5a5e60 !important; }
+.nav-link.text-secondary:hover { color: var(--colorPrimary) !important; }
+
+/* Contrast overrides for common Bootstrap classes */
+.text-success { color: #157347 !important; } 
+.text-primary { color: #0049e6 !important; }
+.text-danger { color: #b41340 !important; }
+.text-warning { color: #7d5a00 !important; } /* Darker warning for contrast */
 
 /* The "No-Line" Rule */
 .border, .border-bottom, .border-top {
@@ -94,6 +104,10 @@ body {
   background-color: var(--colorSurfaceLow);
 }
 
+.bg-gradient-premium {
+    background: var(--bg-gradient-primary) !important;
+}
+
 .widget-card:hover, .card-hover-kinetic:hover {
   transform: scale(1.02);
   background-color: var(--colorSurfaceLowest);
@@ -134,7 +148,15 @@ body {
 .form-control:focus, .form-select:focus {
   background-color: var(--colorSurfaceLowest);
   border-color: var(--colorPrimary);
-  box-shadow: 0 0 0 1px var(--colorPrimary); /* Sólido sutil en vez del glow default de Bootstrap */
+  box-shadow: 0 0 0 2px var(--colorPrimaryContainer); /* Sólido sutil en vez del glow default de Bootstrap */
+  outline: 2px solid var(--colorPrimary); /* A11y Luminous Focus */
+  outline-offset: 2px;
+}
+
+/* Global Luminous Focus Rule */
+:focus-visible {
+  outline: 2px solid var(--colorPrimary) !important;
+  outline-offset: 2px !important;
 }
 
 /* Elementos UI Login */
@@ -292,6 +314,10 @@ body {
   background-color: rgba(25, 135, 84, 0.1) !important;
   color: #198754;
 }
+#cartDescuento, .cart-discount {
+    color: #157347 !important;
+    font-weight: 600;
+}
 
 .bg-warning-subtle {
   background-color: rgba(255, 193, 7, 0.15) !important;
@@ -316,6 +342,24 @@ body {
   font-size: 0.85rem;
   padding: 0.4rem 0.75rem;
   transition: all 0.2s ease;
+}
+
+.btn-outline-primary {
+    border-color: #0040cb !important; /* Even darker blue for AA contrast */
+    color: #0040cb !important;
+}
+.btn-outline-primary:hover {
+    background-color: var(--colorPrimary) !important;
+    color: white !important;
+}
+
+.btn-outline-secondary {
+    border-color: #5a5e60 !important;
+    color: #5a5e60 !important;
+}
+.btn-outline-secondary:hover {
+    background-color: #5a5e60 !important;
+    color: white !important;
 }
 
 .pagination .page-link:hover {
@@ -360,13 +404,24 @@ body {
 
 /* Meta Labels */
 .meta-label {
-  font-size: 0.7rem;
-  color: var(--colorOnSurfaceVar);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 700;
-  display: block;
-  margin-bottom: 2px;
+    font-size: 0.7rem;
+    color: #4a4d4e; /* AA Contrast */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.table-laced thead th, .data-table thead th {
+    background-color: var(--bg-surface-container-low);
+    color: #3b3e3f; /* Darker for better header contrast */
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+    padding: 1rem 0.75rem;
+    border-bottom: 2px solid rgba(0,0,0,0.03);
 }
 
 /* Toast */

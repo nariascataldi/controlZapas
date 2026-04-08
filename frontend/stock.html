@@ -13,13 +13,13 @@
 
     <!-- Header / Floating Navbar (Glass & Gradient Rule) -->
     <div class="container mt-3 mb-4">
-        <nav class="navbar navbar-expand-lg rounded-4 glass-nav px-3 py-2">
+        <nav class="navbar navbar-expand-lg rounded-4 glass-nav px-3 py-2" aria-label="Navegación principal de Inventario">
             <div class="container-fluid">
                 <a class="navbar-brand fw-bold color-primary" href="dashboard.html" id="navBrand">
-                    👟 controlZapas
+                    <span aria-hidden="true">👟</span> controlZapas
                 </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler" type="button" aria-label="Abrir menú de navegación" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon" aria-hidden="true"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto" id="navLinks">
@@ -29,7 +29,7 @@
         </nav>
     </div>
 
-    <div class="container py-2">
+    <main class="container py-2" id="main-content">
         
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <div>
@@ -38,8 +38,8 @@
             </div>
             <div class="d-flex gap-2">
                 <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                    <input type="text" id="busquedaStock" class="form-control border-start-0 ps-0" placeholder="Buscar por nombre, marca, SKU, código, talle..." oninput="filtrarStock()">
+                    <span class="input-group-text bg-white border-end-0" aria-hidden="true"><i class="bi bi-search"></i></span>
+                    <input type="text" id="busquedaStock" class="form-control border-start-0 ps-0" placeholder="Buscar por nombre, marca, SKU, código, talle..." oninput="filtrarStock()" aria-label="Buscar en inventario">
                 </div>
                 <div class="btn-group" id="exportGroup">
                     <button class="btn btn-outline-secondary dropdown-toggle btn-premium" data-bs-toggle="dropdown">
@@ -72,28 +72,28 @@
             <div class="col-6 col-lg-3 stat-admin">
                 <div class="card card-hover-kinetic p-3 h-100">
                     <p class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total SKU</p>
-                    <p class="h3 fw-bold mb-1" id="statTotalSku">...</p>
+                    <p class="h3 fw-bold mb-1" id="statTotalSku" role="status" aria-live="polite">...</p>
                     <p class="text-success small fw-bold mb-0"><i class="bi bi-graph-up-arrow"></i> variantes activas</p>
                 </div>
             </div>
             <div class="col-6 col-lg-3 stat-admin">
                 <div class="card card-hover-kinetic p-3 h-100">
                     <p class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Valor Inventario</p>
-                    <p class="h3 fw-bold mb-1" id="statValorInventario">...</p>
+                    <p class="h3 fw-bold mb-1" id="statValorInventario" role="status" aria-live="polite">...</p>
                     <p class="text-muted small mb-0">Precio Mayorista</p>
                 </div>
             </div>
             <div class="col-6 col-lg-3 stat-admin">
                 <div class="card card-hover-kinetic p-3 h-100 border-start border-4" id="cardStockBajo">
                     <p class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Stock Bajo</p>
-                    <p class="h3 fw-bold mb-1" id="statStockBajo">...</p>
+                    <p class="h3 fw-bold mb-1" id="statStockBajo" role="status" aria-live="polite">...</p>
                     <p class="text-muted small fw-bold mb-0"><i class="bi bi-exclamation-triangle"></i> Requiere acción</p>
                 </div>
             </div>
             <div class="col-6 col-lg-3">
                 <div class="card card-hover-kinetic p-3 h-100">
                     <p class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Tasa Rotación</p>
-                    <p class="h3 fw-bold mb-1" id="statRotacion">...</p>
+                    <p class="h3 fw-bold mb-1" id="statRotacion" role="status" aria-live="polite">...</p>
                     <p class="text-primary small fw-bold mb-0">Unidades/30 días</p>
                 </div>
             </div>
@@ -128,7 +128,7 @@
             <div class="modal-content border-0 rounded-4 premium-shadow">
                 <div class="modal-header border-bottom-0 pb-0">
                     <h5 class="modal-title fw-bold">Nuevo Producto</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" aria-label="Cerrar" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body pb-4">
                     <form id="formNuevoProducto">
@@ -233,7 +233,7 @@
             <div class="modal-content border-0 rounded-4 premium-shadow">
                 <div class="modal-header border-bottom-0 pb-0">
                     <h5 class="modal-title fw-bold">Actualizar Stock</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" aria-label="Cerrar" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <input type="hidden" id="ajustarVarId">
@@ -255,18 +255,18 @@
             <div class="modal-content border-0 rounded-4 overflow-hidden premium-shadow bg-dark text-white">
                 <div class="modal-header border-0 position-absolute w-100" style="z-index: 10; background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);">
                     <h5 class="modal-title fw-bold" id="galeriaTitulo">Producto</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" aria-label="Cerrar" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0">
                     <div id="carouselGaleria" class="carousel slide" data-bs-ride="carousel">
                         <div class="carousel-inner" id="carouselInnerStock">
                             <!-- Imágenes por JS -->
                         </div>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselGaleria" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon"></span>
+                        <button class="carousel-control-prev" type="button" aria-label="Imagen anterior" data-bs-target="#carouselGaleria" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                         </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#carouselGaleria" data-bs-slide="next">
-                            <span class="carousel-control-next-icon"></span>
+                        <button class="carousel-control-next" type="button" aria-label="Siguiente imagen" data-bs-target="#carouselGaleria" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
                         </button>
                     </div>
                 </div>
@@ -282,7 +282,7 @@
     </div>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="mobile-bottom-nav d-md-none fixed-bottom bg-white border-top d-flex justify-content-around py-2 px-2" style="z-index: 1000; box-shadow: 0 -4px 20px rgba(0,0,0,0.08);">
+    <nav class="mobile-bottom-nav d-md-none fixed-bottom bg-white border-top d-flex justify-content-around py-2 px-2" style="z-index: 1000; box-shadow: 0 -4px 20px rgba(0,0,0,0.08);" aria-label="Navegación móvil">
         <a href="dashboard.html" class="text-center text-muted text-decoration-none py-1">
             <i class="bi bi-house fs-5"></i>
             <span class="d-block small" style="font-size: 0.65rem;">Dashboard</span>
@@ -308,15 +308,15 @@
     <!-- Mobile FAB (Floating Action Button) -->
     <button class="mobile-fab d-md-none position-fixed d-flex align-items-center justify-content-center" 
             style="bottom: 5.5rem; right: 1.5rem; left: auto; width: 56px; height: 56px; border-radius: 50%; border: none; background: var(--colorPrimary); color: white; box-shadow: 0 8px 24px rgba(0,73,230,0.35); z-index: 1001;"
-            data-bs-toggle="modal" data-bs-target="#modalNuevoProd">
-        <i class="bi bi-plus-lg fs-4"></i>
+            aria-label="Agregar nuevo producto" data-bs-toggle="modal" data-bs-target="#modalNuevoProd">
+        <i class="bi bi-plus-lg fs-4" aria-hidden="true"></i>
     </button>
 
     <!-- Floating Quick Contact Button (Admin only - desktop only) -->
     <div class="position-fixed bottom-0 end-0 p-3 admin-only-float d-none d-md-block" style="z-index: 1000; margin-bottom: 2rem; margin-right: 2rem;">
         <div class="d-flex align-items-center gap-3 bg-white rounded-4 p-3 shadow-lg" style="background: rgba(255,255,255,0.9) !important; backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5);">
-            <button class="btn btn-success rounded-3 p-2" style="background: #10b981; border: none;">
-                <i class="bi bi-telephone-fill text-white"></i>
+            <button class="btn btn-success rounded-3 p-2" style="background: #10b981; border: none;" aria-label="Contacto rápido">
+                <i class="bi bi-telephone-fill text-white" aria-hidden="true"></i>
             </button>
             <div>
                 <p class="text-muted small mb-0" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Contacto Rápido</p>

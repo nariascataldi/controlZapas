@@ -15,10 +15,10 @@
 
     <!-- Transparent Navbar -->
     <div class="container mt-4 mb-4">
-        <nav class="navbar navbar-expand-lg glass-nav px-4 py-3">
+        <nav class="navbar navbar-expand-lg glass-nav px-4 py-3" aria-label="Navegación principal de Staff">
             <div class="container-fluid p-0">
                 <a class="navbar-brand fw-bold" href="dashboard.html" style="color: #1a1a1a;">
-                    <i class="bi bi-box-fill me-2" style="color: #b41340;"></i> controlZapas
+                    <i class="bi bi-box-fill me-2" style="color: #b41340;" aria-hidden="true"></i> controlZapas
                     <span class="badge rounded-pill bg-dark ms-2"
                         style="font-size: 0.65rem; font-weight: 500;">ADMIN</span>
                 </a>
@@ -49,18 +49,18 @@
     </div>
 
     <!-- Main Content -->
-    <div class="container pb-5">
+    <main class="container pb-5" id="main-content">
 
         <!-- Welcome Banner -->
         <div class="header-gradient mb-5 d-flex justify-content-between align-items-center">
             <div class="position-relative" style="z-index: 2;">
                 <h1 class="fw-bold fs-2 mb-1">Equipo y Staff</h1>
-                <p class="text-white-50 mb-0">Gestión de vendedores, accesos y métricas de rendimiento.</p>
+                <p class="text-white mb-0" style="opacity: 0.9;">Gestión de vendedores, accesos y métricas de rendimiento.</p>
             </div>
             <div class="position-relative" style="z-index: 2;">
                 <button class="btn btn-light rounded-pill px-4 fw-semibold text-dark shadow" data-bs-toggle="modal"
                     data-bs-target="#modalUsuario">
-                    <i class="bi bi-person-plus me-2"></i> Nuevo Vendedor
+                    <i class="bi bi-person-plus me-2" aria-hidden="true"></i> Nuevo Vendedor
                 </button>
             </div>
         </div>
@@ -71,7 +71,7 @@
             <div class="col-12 col-lg-8">
                 <div class="panel-card p-2">
                     <div class="panel-header mb-3">
-                        <h5 class="panel-title"><i class="bi bi-people-fill me-2" style="color: #b41340;"></i>Directorio
+                        <h5 class="panel-title"><i class="bi bi-people-fill me-2" style="color: #b41340;" aria-hidden="true"></i>Directorio
                             de Staff</h5>
                     </div>
                     <div class="card-body px-4 pb-4">
@@ -127,10 +127,10 @@
             </div>
 
         </div> <!-- /.row -->
-    </div>
+    </main>
 
     <!-- Modal ABM Usuario -->
-    <div class="modal fade" id="modalUsuario" tabindex="-1">
+    <div class="modal fade" id="modalUsuario" tabindex="-1" aria-labelledby="modalUsuarioLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow-lg"
                 style="background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);">

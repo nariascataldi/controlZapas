@@ -13,13 +13,13 @@
 
     <!-- Header / Floating Navbar (Glass & Gradient Rule) -->
     <div class="container mt-3 mb-4">
-        <nav class="navbar navbar-expand-lg rounded-4 glass-nav px-3 py-2">
+        <nav class="navbar navbar-expand-lg rounded-4 glass-nav px-3 py-2" aria-label="Navegación del Punto de Venta">
             <div class="container-fluid">
                 <a class="navbar-brand fw-bold color-primary" href="dashboard.html" id="navBrand">
-                    👟 controlZapas
+                    <span aria-hidden="true">👟</span> controlZapas
                 </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler" type="button" aria-label="Abrir menú de navegación" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon" aria-hidden="true"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto" id="navLinks">
@@ -28,7 +28,7 @@
         </nav>
     </div>
 
-    <div class="container py-2">
+    <main class="container py-2" id="main-content">
         <div class="row g-4">
             
             <!-- Buscador y Listado de Productos (60%) -->
@@ -38,26 +38,27 @@
                     <div class="card-header bg-transparent border-bottom-0 pt-4 pb-2 px-4">
                         <div class="scanner-input">
                             <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-light border-0 text-primary scanner-pulse" title="Escáner activo">
+                                <span class="input-group-text bg-light border-0 text-primary scanner-pulse" title="Escáner activo" aria-hidden="true">
                                     <i class="bi bi-upc-scan fs-5"></i>
                                 </span>
                                 <input type="text" class="form-control bg-light border-0 fw-medium" id="posBuscador" 
                                        placeholder="Escanear código o buscar modelo..." autocomplete="off"
+                                       aria-label="Buscar producto por nombre o código"
                                        style="font-size:1rem;">
-                                <button class="btn btn-primary btn-premium px-4" onclick="buscarPos()">
-                                    <i class="bi bi-search"></i>
+                                <button class="btn btn-primary btn-premium px-4" aria-label="Buscar producto" onclick="buscarPos()">
+                                    <i class="bi bi-search" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-3">
-                            <span class="text-muted small" id="posResultCount">Buscá un producto para comenzar</span>
+                            <span class="text-muted small" id="posResultCount" role="status" aria-live="polite">Buscá un producto para comenzar</span>
                         </div>
                     </div>
                     
                     <!-- Product Results Grid -->
                     <div class="card-body p-4 pt-2">
                         <div class="row g-3" id="posResultados">
-                            <div class="col-12 text-center text-muted py-5">
+                            <div class="col-12 text-center text-muted py-5" aria-hidden="true">
                                 <i class="bi bi-shop display-4 opacity-25"></i>
                                 <p class="mt-3">Busca un producto para agregarlo a la venta</p>
                             </div>
@@ -70,16 +71,16 @@
             <div class="col-12 col-lg-5">
                 <div class="card card-hover-kinetic sticky-top" style="top: 20px; border:none;">
                     <!-- Cart Header -->
-                    <div class="card-header bg-gradient-primary text-white py-3 px-4 rounded-top-4 d-flex justify-content-between align-items-center border-0">
-                        <h5 class="mb-0 fw-bold"><i class="bi bi-cart3 me-2"></i>Nueva Venta</h5>
-                        <span class="badge bg-white color-primary rounded-pill mb-0 px-3 py-2" id="cartCount">0 items</span>
+                    <div class="card-header bg-gradient-premium text-white py-3 px-4 rounded-top-4 d-flex justify-content-between align-items-center border-0">
+                        <h2 class="mb-0 fw-bold h5"><i class="bi bi-cart3 me-2" aria-hidden="true"></i>Nueva Venta</h2>
+                        <span class="badge bg-white color-primary rounded-pill mb-0 px-3 py-2" id="cartCount" role="status" aria-live="polite">0 items</span>
                     </div>
                     
                     <!-- Cart Items (Visual) -->
                     <div class="card-body p-0">
                         <div style="max-height: 300px; overflow-y: auto;" id="cartItemsContainer">
                             <div id="cartItems">
-                                <div class="text-center py-4 text-muted small">
+                                <div class="text-center py-4 text-muted small" aria-hidden="true">
                                     <i class="bi bi-cart-x d-block mb-2" style="font-size:1.8rem; opacity:0.3;"></i>
                                     El carrito está vacío
                                 </div>
@@ -92,19 +93,19 @@
                         <form id="formCheckout">
                             <!-- Datos del Cliente -->
                             <h6 class="fw-bold mb-3 color-dark small text-uppercase" style="letter-spacing:0.05em;">
-                                <i class="bi bi-person-fill me-1 text-primary"></i> Datos del Cliente
+                                <i class="bi bi-person-fill me-1 text-primary" aria-hidden="true"></i> Datos del Cliente
                             </h6>
                             <div class="row g-2 mb-3 pos-form-row">
                                 <div class="col-7">
                                     <div class="input-group input-group-sm">
-                                        <span class="input-group-text bg-light border-0 text-muted"><i class="bi bi-person"></i></span>
-                                        <input type="text" class="form-control bg-light border-0" id="clientNombre" placeholder="Nombre completo" required>
+                                        <span class="input-group-text bg-light border-0 text-muted" aria-hidden="true"><i class="bi bi-person"></i></span>
+                                        <input type="text" class="form-control bg-light border-0" id="clientNombre" placeholder="Nombre completo" required aria-label="Nombre del cliente">
                                     </div>
                                 </div>
                                 <div class="col-5">
                                     <div class="input-group input-group-sm">
-                                        <span class="input-group-text bg-light border-0 text-muted"><i class="bi bi-whatsapp"></i></span>
-                                        <input type="text" class="form-control bg-light border-0" id="clientTel" placeholder="WhatsApp" required>
+                                        <span class="input-group-text bg-light border-0 text-muted" aria-hidden="true"><i class="bi bi-whatsapp"></i></span>
+                                        <input type="text" class="form-control bg-light border-0" id="clientTel" placeholder="WhatsApp" required aria-label="Teléfono WhatsApp del cliente">
                                     </div>
                                 </div>
                             </div>
@@ -112,7 +113,7 @@
                             <!-- Precio Toggle (Pill Switches) -->
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="text-muted small fw-medium">Lista de precios</span>
-                                <div class="pill-switch">
+                                <div class="pill-switch" role="group" aria-label="Tipo de precio">
                                     <button type="button" class="pill-option active" data-tipo="minorista" onclick="cambiarTipoPrecio(this)">Minorista</button>
                                     <button type="button" class="pill-option" data-tipo="mayorista" onclick="cambiarTipoPrecio(this)">Mayorista</button>
                                 </div>
@@ -120,34 +121,34 @@
 
                             <!-- Descuentos con Chips -->
                             <h6 class="fw-bold mb-2 color-dark small text-uppercase" style="letter-spacing:0.05em;">
-                                <i class="bi bi-tag-fill me-1 text-primary"></i> Descuentos
+                                <i class="bi bi-tag-fill me-1 text-primary" aria-hidden="true"></i> Descuentos
                             </h6>
                             <div class="row g-2 mb-2">
                                 <div class="col-6">
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-light border-0 text-primary fw-bold" style="font-size:0.8rem;">%</span>
-                                        <input type="number" class="form-control bg-light border-0 text-end fw-medium" id="descPromedio" min="0" max="100" placeholder="0" oninput="actualizarCarrito()">
+                                        <input type="number" class="form-control bg-light border-0 text-end fw-medium" id="descPromedio" min="0" max="100" placeholder="0" oninput="actualizarCarrito()" aria-label="Porcentaje de descuento">
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-light border-0 text-success fw-bold" style="font-size:0.8rem;">$</span>
-                                        <input type="number" class="form-control bg-light border-0 text-end fw-medium" id="descFijo" min="0" placeholder="0" oninput="actualizarCarrito()">
+                                        <input type="number" class="form-control bg-light border-0 text-end fw-medium" id="descFijo" min="0" placeholder="0" oninput="actualizarCarrito()" aria-label="Monto de descuento fijo">
                                     </div>
                                 </div>
                             </div>
                             <div class="row g-2 mb-3 pos-form-row">
                                 <div class="col-6">
-                                    <label class="text-muted small fw-medium mb-1">Método de Pago</label>
-                                    <select class="form-select form-select-sm bg-light border-0" id="saleMetodoPago">
+                                    <label for="saleMetodoPago" class="text-muted small fw-medium mb-1">Método de Pago</label>
+                                    <select class="form-select form-select-sm bg-light border-0" id="saleMetodoPago" aria-label="Método de Pago">
                                         <option value="Efectivo" selected>Efectivo</option>
                                         <option value="Transferencia">Transferencia</option>
                                         <option value="Tarjeta">Tarjeta</option>
                                     </select>
                                 </div>
                                 <div class="col-6">
-                                    <label class="text-muted small fw-medium mb-1">Estado</label>
-                                    <select class="form-select form-select-sm bg-light border-0" id="saleEstado">
+                                    <label for="saleEstado" class="text-muted small fw-medium mb-1">Estado</label>
+                                    <select class="form-select form-select-sm bg-light border-0" id="saleEstado" aria-label="Estado de venta">
                                         <option value="Pagado" selected>Pagado</option>
                                         <option value="Pendiente">Pendiente</option>
                                     </select>
@@ -167,10 +168,9 @@
                                     <span class="small">Descuento</span>
                                     <span class="fw-medium small" id="cartDescuento">-$0.00</span>
                                 </div>
-                                <hr class="my-2" style="border-color:rgba(171,173,174,0.15);">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="fw-bold color-dark">Total a Cobrar</span>
-                                    <span class="checkout-total" id="cartTotal">$0.00</span>
+                                    <span class="checkout-total" id="cartTotal" role="status" aria-live="polite">$0.00</span>
                                 </div>
                             </div>
 
@@ -210,24 +210,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="js/main.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const inputEscanner = document.getElementById('posBuscador');
-            if (inputEscanner) {
-                inputEscanner.focus();
-            }
-        });
-
-        function cambiarTipoPrecio(btn) {
-            document.querySelectorAll('.pill-switch .pill-option').forEach(p => p.classList.remove('active'));
-            btn.classList.add('active');
-            const tipo = btn.dataset.tipo;
-            const radioId = tipo === 'mayorista' ? 'precioMay' : 'precioMin';
-            const radio = document.getElementById(radioId);
-            if (radio) radio.checked = true;
-            if (window.actualizarCarrito) window.actualizarCarrito();
-        }
-    </script>
     
     <!-- Radio buttons ocultos para compatibilidad con app.js -->
     <div style="display:none;">

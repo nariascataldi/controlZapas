@@ -61,8 +61,38 @@ jobs:
         working-directory: backend
         run: npm test
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/controlzapas_test?schema=public
-          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/controlzapas_test?schema=public
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/controlzapas_test
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/controlzapas_test
           JWT_SECRET: test_secret
           NODE_ENV: test
           CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+
+  a11y:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+      
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install chromium --with-deps
+      
+      - name: Run A11y audit
+        working-directory: frontend
+        run: node tests/a11y_audit.js
+      
+      - name: Upload A11y report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-report
+          path: .antigravity/a11y/A11Y_AUDIT_REPORT.json
