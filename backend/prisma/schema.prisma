@@ -8,6 +8,11 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Rol {
+  ADMIN
+  VENDEDOR
+}
+
 model Usuario {
   id                Int       @id @default(autoincrement())
   nombre            String    @unique
@@ -109,9 +114,4 @@ model ProductoImagen {
   producto     Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
 
   @@map("producto_imagenes")
-}
-
-enum Rol {
-  ADMIN
-  VENDEDOR
 }
