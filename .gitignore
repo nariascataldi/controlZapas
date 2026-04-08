@@ -58,6 +58,7 @@ screenshots/
 # Migration plans
 MIGRATION_SUPABASE.md
 VERIFICATION_REPORT.md
+IMPLEMENTATION_PLAN_A11Y.md
 
 # Scripts con credenciales
 scripts/

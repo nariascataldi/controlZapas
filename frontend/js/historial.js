@@ -84,6 +84,16 @@ export async function initHistorial() {
     });
 
     cargarVentas();
+
+    window.exportarVentas = (tipo) => {
+        exportar(tipo);
+    };
+    window.cargarVentasManual = () => {
+        cargarVentas();
+    };
+    window.exportarSeleccionadasUI = () => {
+        exportarSeleccionadas();
+    };
 }
 
 async function cargarVendedores() {
@@ -216,10 +226,10 @@ function renderRow(v) {
     }[v.estado] || '<span class="badge bg-secondary">-</span>';
 
     const metodoIcon = {
-        'Efectivo': '<i class="bi bi-cash text-success"></i>',
-        'Transferencia': '<i class="bi bi-bank text-primary"></i>',
-        'Tarjeta': '<i class="bi bi-credit-card text-info"></i>'
-    }[v.metodo_pago] || '<i class="bi bi-wallet2 text-muted"></i>';
+        'Efectivo': '<i class="bi bi-cash text-success" aria-hidden="true"></i>',
+        'Transferencia': '<i class="bi bi-bank text-primary" aria-hidden="true"></i>',
+        'Tarjeta': '<i class="bi bi-credit-card text-info" aria-hidden="true"></i>'
+    }[v.metodo_pago] || '<i class="bi bi-wallet2 text-muted" aria-hidden="true"></i>';
 
     return `
         <tr class="${isHighValue ? 'row-highlight' : ''} ${isSelected ? 'table-active' : ''}" data-id="${v.id}">

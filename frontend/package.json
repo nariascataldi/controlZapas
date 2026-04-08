@@ -9,8 +9,8 @@
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "test:e2e": "playwright test"
   },
-  "dependencies": {},
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@babel/core": "^7.24.0",
     "@babel/preset-env": "^7.24.0",
     "@playwright/test": "^1.42.0",

@@ -50,9 +50,9 @@ export async function buscarPos(fueEnter = false) {
                 <div class="col-12 col-md-6">
                     <div class="product-card-pos d-flex align-items-center gap-3 ${disable ? 'opacity-50' : ''}" 
                          data-item="${itemJson}" ${disable ? '' : `onclick="agregarAlCarritoById(${item.variante_id})"`}>
-                        <div class="product-thumb">
-                            <i class="bi bi-box-seam"></i>
-                        </div>
+                    <div class="product-thumb" aria-hidden="true">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
                         <div class="flex-grow-1 min-w-0">
                             <div class="fw-bold text-truncate color-dark" style="font-size:0.9rem;" title="${item.nombre}">${item.nombre}</div>
                             <div class="d-flex gap-1 mt-1 flex-wrap">
@@ -151,7 +151,7 @@ export function actualizarCarrito() {
 
         container.innerHTML += `
             <div class="cart-item">
-                <div class="cart-thumb">
+                <div class="cart-thumb" aria-hidden="true">
                     <i class="bi bi-box-seam" style="font-size:0.9rem;"></i>
                 </div>
                 <div class="flex-grow-1 min-w-0">
@@ -166,8 +166,8 @@ export function actualizarCarrito() {
                 <div class="text-end" style="min-width:70px;">
                     <div class="fw-bold color-dark" style="font-size:0.85rem;">${formatCurrency(totalFila)}</div>
                 </div>
-                <button type="button" class="btn btn-sm p-0 text-danger" style="opacity:0.5; font-size:0.8rem;" onclick="quitarCart(${idx})" title="Quitar">
-                    <i class="bi bi-x-lg"></i>
+                <button type="button" class="btn btn-sm p-0 text-danger" style="opacity:0.5; font-size:0.8rem;" onclick="quitarCart(${idx})" title="Quitar item">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
             </div>
         `;
@@ -175,7 +175,7 @@ export function actualizarCarrito() {
 
     if (carritoPos.length === 0) {
         container.innerHTML = `
-            <div class="text-center py-4 text-muted small">
+            <div class="text-center py-4 text-muted small" aria-hidden="true">
                 <i class="bi bi-cart-x d-block mb-2" style="font-size:1.8rem; opacity:0.3;"></i>
                 El carrito está vacío
             </div>`;
@@ -206,8 +206,8 @@ export function actualizarCarrito() {
     const chipsContainer = document.getElementById('discountChips');
     if (chipsContainer) {
         chipsContainer.innerHTML = '';
-        if (descPct > 0) chipsContainer.innerHTML += `<span class="discount-chip percent"><i class="bi bi-percent"></i> ${descPct}% off</span> `;
-        if (descFijo > 0) chipsContainer.innerHTML += `<span class="discount-chip fixed"><i class="bi bi-cash"></i> $${descFijo} off</span>`;
+        if (descPct > 0) chipsContainer.innerHTML += `<span class="discount-chip percent"><i class="bi bi-percent" aria-hidden="true"></i> ${descPct}% off</span> `;
+        if (descFijo > 0) chipsContainer.innerHTML += `<span class="discount-chip fixed"><i class="bi bi-cash" aria-hidden="true"></i> ${formatCurrency(descFijo)} off</span>`;
     }
 }
 
@@ -322,9 +322,29 @@ export function nuevaVentaPOS() {
     const modalEl = document.getElementById('modalVentaOk');
     const modal = bootstrap.Modal.getInstance(modalEl);
     if (modal) {
-        document.getElementById('posBuscador')?.focus();
-        setTimeout(() => modal.hide(), 50);
+        modal.hide();
+        setTimeout(() => document.getElementById('posBuscador')?.focus(), 150);
     }
+}
+
+export function cambiarTipoPrecio(btn) {
+    document.querySelectorAll('.pill-switch .pill-option').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const tipo = btn.dataset.tipo;
+    const radioId = tipo === 'mayorista' ? 'precioMay' : 'precioMin';
+    const radio = document.getElementById(radioId);
+    if (radio) radio.checked = true;
+    if (window.actualizarCarrito) window.actualizarCarrito();
+}
+
+// Inicialización
+if (window.location.pathname.endsWith('ventas.html')) {
+    document.addEventListener('DOMContentLoaded', () => {
+        const inputEscanner = document.getElementById('posBuscador');
+        if (inputEscanner) {
+            inputEscanner.focus();
+        }
+    });
 }
 
 window.buscarPos = buscarPos;
@@ -334,6 +354,7 @@ window.actualizarCarrito = actualizarCarrito;
 window.cambiarCant = cambiarCant;
 window.quitarCart = quitarCart;
 window.nuevaVentaPOS = nuevaVentaPOS;
+window.cambiarTipoPrecio = cambiarTipoPrecio;
 
 // Exponer variables de estado para el onclick del HTML
 window.buscarPosResults = buscarPosResults;

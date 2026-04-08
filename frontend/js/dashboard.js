@@ -3,6 +3,14 @@ import { formatCurrency } from './utils.js';
 
 export async function cargarDashboard() {
     if (!window.location.pathname.endsWith('dashboard.html')) return;
+    
+    // Set current date (moved from inline script)
+    const elDate = document.getElementById('currentDate');
+    if (elDate) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        elDate.textContent = 'Hoy: ' + new Date().toLocaleDateString('es-ES', options);
+    }
+
     try {
         const kpis = await fetchAPI('/stats/kpis');
         const elTotalVentas = document.getElementById('widgetTotalVentas');
@@ -44,7 +52,7 @@ export async function cargarHistorialVendedores() {
         tr.innerHTML = `
             <td class="py-3">
                 <div class="d-flex align-items-center">
-                    <div class="rounded-circle bg-secondary bg-opacity-10 text-secondary me-3 d-flex justify-content-center align-items-center" style="width:36px; height:36px">
+                    <div class="rounded-circle bg-secondary bg-opacity-10 text-secondary me-3 d-flex justify-content-center align-items-center" style="width:36px; height:36px" aria-hidden="true">
                         <i class="bi bi-person-badge fs-6"></i>
                     </div>
                     <span class="fw-semibold color-dark">${v.nombre}</span>
