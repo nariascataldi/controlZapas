@@ -1,6 +1,7 @@
 import { fetchAPI, API_URL } from './api.js';
 import { getUser } from './auth.js';
 import { formatCurrency, getImageUrl } from './utils.js';
+import { agruparProductos, crearCardProductoAgrupada, crearCardMobileAgrupada, cargarThumbsMultiples } from './productCards.js';
 
 let inventarioGlobal = [];
 let variantesTemporales = [];
@@ -226,56 +227,54 @@ export function renderStock(lista = inventarioGlobal) {
     if (!tbody) return;
     tbody.innerHTML = '';
 
+    const grupos = agruparProductos(lista);
     const user = getUser();
     const isAdmin = user && user.rol && user.rol.toUpperCase() === 'ADMIN';
 
-    lista.forEach(item => {
-        const pMostrar = isAdmin ?
-            `<div class="fw-bold text-dark">${formatCurrency(item.precio_mayorista)}</div><div class="small text-muted">${formatCurrency(item.precio_minorista)} min</div>` :
-            `<div class="fw-bold text-dark">${formatCurrency(item.precio_minorista)}</div>`;
+    if (grupos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No se encontraron productos</td></tr>';
+        return;
+    }
 
-        if (!item.sku) return;
+    grupos.forEach(grupo => {
+        const primerVariante = grupo.variantes[0];
+        const variantesStock = grupo.variantes.filter(v => v.stock_actual > 0);
+        const totalStock = variantesStock.reduce((sum, v) => sum + v.stock_actual, 0);
+        const tieneStock = totalStock > 0;
 
-        const isLowStock = item.stock_actual <= (item.stock_minimo || 2);
-        const disableClass = item.stock_actual <= 0 ? 'opacity-50' : '';
-        
-        let stockBadge = '';
-        if (item.stock_actual <= 0) {
-            stockBadge = `<div class="d-flex flex-column align-items-center"><span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1 fw-bold">Agotado</span></div>`;
-        } else if (isLowStock) {
-            stockBadge = `<div class="d-flex flex-column align-items-center gap-1">
-                            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1 fw-bold">${item.stock_actual} Unids.</span>
-                            <span class="text-danger fw-bolder" style="font-size: 0.6rem; letter-spacing: 0.5px; text-transform: uppercase;">Stock Bajo</span>
-                          </div>`;
-        } else {
-            stockBadge = `<div class="d-flex justify-content-center"><span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1 fw-bold">${item.stock_actual} Unids.</span></div>`;
-        }
+        const pMostrar = isAdmin
+            ? `<div class="fw-bold text-dark">${formatCurrency(grupo.precio_mayorista)}</div><div class="small text-muted">${formatCurrency(grupo.precio_minorista)} min</div>`
+            : `<div class="fw-bold text-dark">${formatCurrency(grupo.precio_minorista)}</div>`;
 
-        const itemJson = JSON.stringify(item).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        
+        const stockBadge = !tieneStock
+            ? `<span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1 fw-bold">Sin Stock</span>`
+            : `<span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1 fw-bold">${totalStock} Unids.</span>`;
+
+        const variantesJson = JSON.stringify(grupo).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
         tbody.innerHTML += `
-            <tr class="align-middle border-bottom border-light hover-bg-light transition-all ${disableClass}">
+            <tr class="align-middle border-bottom border-light transition-all">
                 <td class="py-3 ps-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="stock-thumb bg-white rounded-3 shadow-sm border p-1" style="width: 50px; height: 50px; flex-shrink: 0;" data-pid="${item.producto_id}" data-item="${itemJson}">
-                            <div class="w-100 h-100 bg-light rounded-2 d-flex align-items-center justify-content-center text-muted" aria-hidden="true">
+                        <div class="stock-thumb bg-white rounded-3 shadow-sm border p-1" style="width: 50px; height: 50px; flex-shrink: 0;" data-pid="${grupo.producto_id}">
+                            <div class="w-100 h-100 bg-light rounded-2 d-flex align-items-center justify-content-center text-muted">
                                 <i class="bi bi-box-seam"></i>
                             </div>
                         </div>
                         <div>
-                            <span class="fw-bold text-dark d-block mb-1" style="font-size: 0.95rem;">${item.nombre}</span>
-                            <span class="text-muted fw-medium" style="font-size: 0.8rem;">${item.marca || 'Sin marca'}</span>
+                            <span class="fw-bold text-dark d-block mb-1" style="font-size: 0.95rem;">${grupo.nombre}</span>
+                            <span class="text-muted fw-medium" style="font-size: 0.8rem;">${grupo.marca}</span>
                         </div>
                     </div>
                 </td>
                 <td class="py-3">
-                    <div class="d-flex align-items-center gap-1 flex-wrap">
-                        <span class="badge bg-light text-dark border"><i class="bi bi-circle-fill text-secondary me-1" style="font-size:0.5rem"></i>${item.color || '-'}</span>
-                        <span class="badge bg-secondary text-white rounded-pill">Talla ${item.talla}</span>
+                    <div class="d-flex flex-column gap-1">
+                        <span class="badge bg-secondary text-white rounded-pill">${grupo.variantes.length} talles</span>
+                        <span class="text-muted small">${variantesStock.map(v => v.talla).join(', ')}</span>
                     </div>
                 </td>
                 <td class="py-3 font-monospace text-muted small tracking-tight">
-                    ${item.sku}
+                    ${primerVariante?.sku || '-'}
                 </td>
                 <td class="py-3">
                     ${pMostrar}
@@ -285,16 +284,12 @@ export function renderStock(lista = inventarioGlobal) {
                 </td>
                 <td class="py-3 text-end pe-3">
                     <div class="d-flex justify-content-end gap-2">
-                        <button class="btn btn-sm btn-light text-dark border-0 px-2 rounded-pill" title="Ver Galería" aria-label="Ver Galería" onclick="verGaleriaStock(${item.producto_id}, '${item.nombre.replace(/'/g, "\\'")}')">
-                            <i class="bi bi-eye" aria-hidden="true"></i>
+                        <button class="btn btn-sm btn-light text-dark border-0 px-2 rounded-pill" title="Ver Galería" onclick="verGaleriaStock(${grupo.producto_id}, '${grupo.nombre.replace(/'/g, "\\'")}')">
+                            <i class="bi bi-eye"></i>
                         </button>
-                        ${isLowStock ? `<button class="btn btn-sm btn-light text-success border-0 px-2 rounded-pill" title="Solicitar Proveedor" aria-label="Solicitar Proveedor por WhatsApp" onclick="event.stopPropagation(); window.open('https://wa.me/?text=Necesitamos%20reposición%20del%20SKU%20${item.sku}')"><i class="bi bi-whatsapp" aria-hidden="true"></i></button>` : ''}
                         ${isAdmin ? `
-                            <button class="btn btn-sm btn-light text-primary border-0 px-2 rounded-pill" title="Ajustar Stock" aria-label="Ajustar Stock" onclick="abrirModalAjustarStock(${item.variante_id}, ${item.stock_actual})">
-                                <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                            </button>
-                            <button class="btn btn-sm btn-light text-danger border-0 px-2 rounded-pill" title="Eliminar Variante" aria-label="Eliminar Variante" onclick="eliminarVariante(${item.variante_id})">
-                                <i class="bi bi-trash" aria-hidden="true"></i>
+                            <button class="btn btn-sm btn-light text-primary border-0 px-2 rounded-pill" title="Gestionar Talles" onclick="abrirModalGestionarTalles('${variantesJson.replace(/"/g, '&quot;')}')">
+                                <i class="bi bi-collection"></i>
                             </button>
                         ` : ''}
                     </div>
@@ -303,7 +298,8 @@ export function renderStock(lista = inventarioGlobal) {
         `;
     });
 
-    cargarThumbsStock(lista);
+    const pids = [...new Set(grupos.map(g => g.producto_id))];
+    cargarThumbsMultiples(pids, '.stock-thumb');
 }
 
 export async function cargarThumbsStock(lista) {
@@ -351,16 +347,17 @@ export function filtrarStock() {
     actualizarBotonLimpiar();
 }
 
-// Render Mobile Card Layout
+// Render Mobile Card Layout (agrupado)
 export function renderMobileStock(lista = inventarioGlobal) {
     const container = document.getElementById('mobileStockList');
     if (!container) return;
     container.innerHTML = '';
 
+    const grupos = agruparProductos(lista);
     const user = getUser();
     const isAdmin = user && user.rol && user.rol.toUpperCase() === 'ADMIN';
 
-    if (lista.length === 0) {
+    if (grupos.length === 0) {
         container.innerHTML = `
             <div class="text-center py-5">
                 <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
@@ -369,53 +366,70 @@ export function renderMobileStock(lista = inventarioGlobal) {
         return;
     }
 
-    lista.forEach(item => {
-        const isLowStock = item.stock_actual <= (item.stock_minimo || 2);
-        const stockBadge = item.stock_actual <= 0 
+    grupos.forEach(grupo => {
+        const variantesStock = grupo.variantes.filter(v => v.stock_actual > 0);
+        const totalStock = variantesStock.reduce((sum, v) => sum + v.stock_actual, 0);
+        const tieneStock = totalStock > 0;
+
+        const stockBadge = !tieneStock 
             ? `<span class="badge bg-danger">SIN STOCK</span>`
-            : isLowStock 
-                ? `<span class="badge bg-warning text-dark">BAJO (${item.stock_actual})</span>`
-                : `<span class="badge bg-success">EN STOCK (${item.stock_actual})</span>`;
+            : `<span class="badge bg-success">EN STOCK (${totalStock})</span>`;
+
+        const variantesJson = JSON.stringify(grupo).replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
         container.innerHTML += `
-            <article class="mobile-product-card">
-                <div class="d-flex gap-3">
-                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center stock-thumb" style="width: 80px; height: 80px; flex-shrink: 0;" data-pid="${item.producto_id}" data-item="${JSON.stringify(item).replace(/"/g, '&quot;')}" aria-hidden="true">
-                        <i class="bi bi-box-seam text-muted" style="font-size: 2rem;"></i>
+            <article class="mobile-product-card-group">
+                <div class="card-header-group" onclick="this.classList.toggle('expanded'); this.nextElementSibling.classList.toggle('show')">
+                    <div class="d-flex gap-3">
+                        <div class="bg-light rounded-3 d-flex align-items-center justify-content-center stock-thumb" 
+                             style="width: 80px; height: 80px; flex-shrink: 0;" data-pid="${grupo.producto_id}">
+                            <i class="bi bi-box-seam text-muted" style="font-size: 2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h5 class="fw-bold mb-1" style="font-size: 1rem;">${grupo.nombre}</h5>
+                                <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size: 0.6rem;">${grupo.variantes.length} talles</span>
+                            </div>
+                            <p class="text-muted small mb-1">${grupo.marca}</p>
+                            <div class="d-flex gap-2 align-items-center">
+                                <span class="fw-bold color-primary">${formatCurrency(grupo.precio_minorista)}</span>
+                                ${stockBadge}
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex-grow-1">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <h5 class="fw-bold mb-1" style="font-size: 1rem;">${item.nombre}</h5>
-                            <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size: 0.6rem;">NEW</span>
-                        </div>
-                        <p class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Tasa Rotación</p>
-                        <p class="h3 fw-bold mb-1" id="statRotacion" role="status" aria-live="polite">...</p>
-                        <p class="text-muted mb-2" style="font-size: 0.75rem; font-family: monospace;">SKU: ${item.sku}</p>
-                        <div class="d-flex gap-2 align-items-center mb-2">
-                            <span class="badge bg-light text-dark">Talla ${item.talla}</span>
-                            <span class="text-muted small">${item.color || '-'}</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold color-primary">${formatCurrency(item.precio_minorista)}</span>
-                            ${stockBadge}
-                        </div>
+                    <div class="expand-icon text-muted mt-2 text-center">
+                        <i class="bi bi-chevron-down"></i>
                     </div>
                 </div>
-                <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
-                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="verGaleriaStock(${item.producto_id}, '${item.nombre.replace(/'/g, "\\'")}')">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                    ${isAdmin ? `
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="abrirModalAjustarStock(${item.variante_id}, ${item.stock_actual})">
-                            <i class="bi bi-pencil"></i>
+                <div class="card-body-group collapse">
+                    <div class="border-top pt-2 mt-2">
+                        <div class="small fw-bold text-muted mb-2">Talles disponibles:</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            ${grupo.variantes.map(v => `
+                                <div class="d-flex align-items-center gap-2 p-2 rounded bg-light">
+                                    <span class="fw-bold">Talla ${v.talla}</span>
+                                    <span class="badge ${v.stock_actual > 0 ? 'bg-success' : 'bg-danger'}">${v.stock_actual > 0 ? v.stock_actual : 'Sin stock'}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="verGaleriaStock(${grupo.producto_id}, '${grupo.nombre.replace(/'/g, "\\'")}')">
+                            <i class="bi bi-eye"></i>
                         </button>
-                    ` : ''}
+                        ${isAdmin ? `
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="abrirModalGestionarTalles('${variantesJson.replace(/"/g, '&quot;')}')">
+                                <i class="bi bi-collection"></i> Gestionar
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
             </article>
         `;
     });
 
-    cargarThumbsStock(lista);
+    const pids = [...new Set(grupos.map(g => g.producto_id))];
+    cargarThumbsMultiples(pids, '.stock-thumb');
 }
 
 // Expose to window
@@ -589,6 +603,84 @@ export function abrirModalAjustarStock(varId, stockActual) {
     modal.show();
 }
 
+export function abrirModalGestionarTalles(variantesJson) {
+    try {
+        const grupo = JSON.parse(variantesJson.replace(/&quot;/g, '"'));
+        
+        const modalBody = document.getElementById('modalGestionarTallesBody');
+        if (!modalBody) {
+            const modalHtml = `
+                <div class="modal fade" id="modalGestionarTalles" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content border-0 rounded-4 premium-shadow">
+                            <div class="modal-header border-bottom-0 pb-0">
+                                <h5 class="modal-title fw-bold">Gestionar Talles - ${grupo.nombre}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body pb-4" id="modalGestionarTallesBody"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+        
+        const body = document.getElementById('modalGestionarTallesBody');
+        body.innerHTML = `
+            <div class="mb-3">
+                <span class="text-muted small">${grupo.marca}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Talla</th>
+                            <th>Color</th>
+                            <th>SKU</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${grupo.variantes.map(v => `
+                            <tr>
+                                <td class="fw-bold">${v.talla}</td>
+                                <td>${v.color}</td>
+                                <td class="text-muted small">${v.sku || '-'}</td>
+                                <td class="text-center">
+                                    <span class="badge ${v.stock_actual > 0 ? 'bg-success' : 'bg-danger'}">
+                                        ${v.stock_actual}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="abrirModalAjustarStock(${v.variante_id}, ${v.stock_actual})">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarVariante(${v.variante_id})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-primary btn-premium" onclick="document.getElementById('modalGestionarTalles').querySelector('.btn-close').click()">
+                    Cerrar
+                </button>
+            </div>
+        `;
+        
+        document.querySelector('#modalGestionarTalles .modal-title').textContent = `Gestionar Talles - ${grupo.nombre}`;
+        
+        const modal = new bootstrap.Modal(document.getElementById('modalGestionarTalles'));
+        modal.show();
+    } catch (e) {
+        console.error('Error al abrir modal de gestionar talles:', e);
+    }
+}
+
 export async function confirmarAjustarStock() {
     const varId = document.getElementById('ajustarVarId').value;
     const nuevoStock = document.getElementById('ajustarStockNum').value;
@@ -707,6 +799,7 @@ window.renderGaleriaPreview = renderGaleriaPreview;
 window.limpiarGaleriaPreview = limpiarGaleriaPreview;
 window.subirImagenesAlProducto = subirImagenesAlProducto;
 window.abrirModalAjustarStock = abrirModalAjustarStock;
+window.abrirModalGestionarTalles = abrirModalGestionarTalles;
 window.confirmarAjustarStock = confirmarAjustarStock;
 window.verGaleriaStock = verGaleriaStock;
 window.eliminarVariante = eliminarVariante;

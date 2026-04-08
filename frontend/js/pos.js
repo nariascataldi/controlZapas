@@ -1,6 +1,7 @@
 import { fetchAPI, API_URL } from './api.js';
 import { getUser } from './auth.js';
 import { formatCurrency, getImageUrl } from './utils.js';
+import { agruparProductos, cargarThumbsMultiples } from './productCards.js';
 
 let carritoPos = [];
 let buscarPosResults = [];
@@ -21,58 +22,107 @@ export async function buscarPos(fueEnter = false) {
             return;
         }
 
+        const grupos = agruparProductos(res);
         const userRole = getUser().rol;
+        const isAdmin = userRole === 'ADMIN';
 
         if (fueEnter && query.length > 0) {
-            const exactaSKU = res.find(item => item.sku && item.sku.toLowerCase() === query.toLowerCase());
-            if (exactaSKU && exactaSKU.stock_actual > 0) {
-                agregarAlCarrito(exactaSKU);
+            const conStock = grupos.filter(g => g.variantes.some(v => v.stock_actual > 0));
+            if (conStock.length === 1) {
+                const grupo = conStock[0];
+                const variantesStock = grupo.variantes.filter(v => v.stock_actual > 0);
+                if (variantesStock.length === 1) {
+                    agregarAlCarrito(variantesStock[0]);
+                } else {
+                    mostrarSelectorTallePOS(grupo);
+                }
                 inputEl.value = '';
                 const scannerEl = document.querySelector('.scanner-input');
                 if (scannerEl) { scannerEl.classList.add('scanner-flash'); setTimeout(() => scannerEl.classList.remove('scanner-flash'), 500); }
                 return buscarPos(false);
-            } else if (res.length === 1 && res[0].stock_actual > 0) {
-                agregarAlCarrito(res[0]);
+            } else if (conStock.length > 1) {
+                mostrarSelectorTallePOS(conStock[0]);
                 inputEl.value = '';
                 return buscarPos(false);
             }
         }
 
         const countEl = document.getElementById('posResultCount');
-        if (countEl) countEl.textContent = `${res.length} producto${res.length !== 1 ? 's' : ''} encontrado${res.length !== 1 ? 's' : ''}`;
+        if (countEl) countEl.textContent = `${grupos.length} producto${grupos.length !== 1 ? 's' : ''} encontrado${grupos.length !== 1 ? 's' : ''}`;
 
-        res.forEach(item => {
-            const disable = item.stock_actual <= 0;
-            const precioRef = userRole === 'ADMIN' ? item.precio_mayorista : item.precio_minorista;
-            const itemJson = JSON.stringify(item).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        grupos.forEach(grupo => {
+            const variantesStock = grupo.variantes.filter(v => v.stock_actual > 0);
+            const totalStock = variantesStock.reduce((sum, v) => sum + v.stock_actual, 0);
+            const tieneStock = totalStock > 0;
+            
+            const precioRef = isAdmin ? grupo.precio_mayorista : grupo.precio_minorista;
+            const variantesJson = JSON.stringify(grupo).replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
             container.innerHTML += `
                 <div class="col-12 col-md-6">
-                    <div class="product-card-pos d-flex align-items-center gap-3 ${disable ? 'opacity-50' : ''}" 
-                         data-item="${itemJson}" ${disable ? '' : `onclick="agregarAlCarritoById(${item.variante_id})"`}>
-                    <div class="product-thumb" aria-hidden="true">
-                        <i class="bi bi-box-seam"></i>
-                    </div>
+                    <div class="product-card-group-pos d-flex align-items-center gap-3 ${!tieneStock ? 'opacity-50' : ''}" 
+                         data-variantes="${variantesJson}" onclick="event.stopPropagation(); mostrarSelectorTallePOS(${grupo.producto_id})">
+                        <div class="product-thumb bg-light rounded-3" style="width:50px;height:50px;flex-shrink:0;" data-pid="${grupo.producto_id}">
+                            <i class="bi bi-box-seam text-muted d-flex align-items-center justify-content-center h-100"></i>
+                        </div>
                         <div class="flex-grow-1 min-w-0">
-                            <div class="fw-bold text-truncate color-dark" style="font-size:0.9rem;" title="${item.nombre}">${item.nombre}</div>
+                            <div class="fw-bold text-truncate color-dark" style="font-size:0.9rem;" title="${grupo.nombre}">${grupo.nombre}</div>
                             <div class="d-flex gap-1 mt-1 flex-wrap">
-                                <span class="badge" style="background:#eff1f2; color:#595c5d; font-weight:500;">${item.color || '-'}</span>
-                                <span class="badge" style="background:#eff1f2; color:#595c5d; font-weight:500;">Talla ${item.talla}</span>
-                                <span class="badge" style="background:rgba(0,73,230,0.08); color:#0049e6; font-weight:500;">${item.stock_actual} ud</span>
+                                <span class="badge" style="background:#eff1f2; color:#595c5d; font-weight:500;">${grupo.marca}</span>
+                                <span class="badge" style="background:rgba(0,73,230,0.08); color:#0049e6; font-weight:500;">${variantesStock.length} talles</span>
+                                <span class="badge" style="background:rgba(0,73,230,0.08); color:#0049e6; font-weight:500;">${totalStock} ud</span>
                             </div>
                         </div>
                         <div class="text-end" style="min-width:80px;">
                             <div class="fw-bold color-dark" style="font-size:0.95rem;">${formatCurrency(precioRef)}</div>
-                            ${disable ? '<div class="text-danger" style="font-size:0.65rem;">Sin Stock</div>' : '<div class="text-success" style="font-size:0.65rem;">Disponible</div>'}
+                            ${!tieneStock ? '<div class="text-danger" style="font-size:0.65rem;">Sin Stock</div>' : '<div class="text-success" style="font-size:0.65rem;">Disponible</div>'}
                         </div>
                     </div>
                 </div>
             `;
         });
 
-        cargarThumbsProductos(res);
+        const pids = [...new Set(grupos.map(g => g.producto_id))];
+        cargarThumbsMultiples(pids, '.product-thumb');
 
     } catch (e) { console.error(e); }
+}
+
+function mostrarSelectorTallePOS(grupo) {
+    const variantesStock = grupo.variantes.filter(v => v.stock_actual > 0);
+    
+    if (variantesStock.length === 1) {
+        agregarAlCarrito(variantesStock[0]);
+        return;
+    }
+
+    const container = document.getElementById('posResultados');
+    const variantesJson = JSON.stringify(grupo).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    
+    container.innerHTML = `
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">${grupo.nombre}</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="buscarPos()">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Selecciona la talla:</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        ${variantesStock.map(v => `
+                            <button class="btn btn-lg btn-outline-primary rounded-pill" 
+                                    onclick="agregarAlCarritoPorVarianteId(${v.variante_id})">
+                                Talla ${v.talla}
+                                <span class="badge bg-success ms-1">${v.stock_actual}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 export async function cargarThumbsProductos(items) {
@@ -107,6 +157,37 @@ export function agregarAlCarritoById(varianteId) {
         return;
     }
     agregarAlCarrito(prod);
+}
+
+export function agregarAlCarritoPorVarianteId(varianteId) {
+    let prod = buscarPosResults.find(i => i.variante_id === varianteId);
+    
+    if (!prod) {
+        const grupos = agruparProductos(buscarPosResults);
+        for (const grupo of grupos) {
+            const v = grupo.variantes.find(v => v.variante_id === varianteId);
+            if (v) {
+                prod = {
+                    variante_id: v.variante_id,
+                    producto_id: grupo.producto_id,
+                    nombre: grupo.nombre,
+                    marca: grupo.marca,
+                    color: v.color,
+                    talla: v.talla,
+                    precio_mayorista: grupo.precio_mayorista,
+                    precio_minorista: grupo.precio_minorista,
+                    stock_actual: v.stock_actual,
+                    sku: v.sku
+                };
+                break;
+            }
+        }
+    }
+    
+    if (prod) {
+        agregarAlCarrito(prod);
+        buscarPos();
+    }
 }
 
 export function agregarAlCarrito(prod) {
@@ -350,6 +431,8 @@ if (window.location.pathname.endsWith('ventas.html')) {
 window.buscarPos = buscarPos;
 window.agregarAlCarrito = agregarAlCarrito;
 window.agregarAlCarritoById = agregarAlCarritoById;
+window.agregarAlCarritoPorVarianteId = agregarAlCarritoPorVarianteId;
+window.mostrarSelectorTallePOS = mostrarSelectorTallePOS;
 window.actualizarCarrito = actualizarCarrito;
 window.cambiarCant = cambiarCant;
 window.quitarCart = quitarCart;

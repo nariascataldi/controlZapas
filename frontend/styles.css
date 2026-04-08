@@ -1397,3 +1397,198 @@ html, body {
     display: flex;
   }
 }
+
+/* ========================
+   Product Cards Grouped Styles
+   ======================== */
+
+/* Card Group (expandible) */
+.product-card-group {
+  background: var(--colorSurfaceLowest);
+  border-radius: 1rem;
+  box-shadow: var(--shadowAmbient);
+  margin-bottom: 1rem;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-card-group:hover {
+  box-shadow: 0 24px 48px rgba(12, 15, 16, 0.08);
+}
+
+.product-card-group .card-header-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  cursor: pointer;
+  background: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.product-card-group .card-header-group:hover {
+  background-color: var(--colorSurfaceLow);
+}
+
+.product-card-group .expand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--colorSurfaceLow);
+  color: var(--colorOnSurfaceVar);
+  transition: transform 0.3s ease;
+}
+
+.product-card-group.expanded .expand-icon {
+  transform: rotate(180deg);
+}
+
+.product-card-group .card-body-group {
+  border-top: 1px solid var(--colorSurfaceLow);
+  background: var(--colorSurface);
+}
+
+.product-card-group .card-body-group.collapse {
+  display: none;
+}
+
+.product-card-group.expanded .card-body-group.collapse {
+  display: block;
+}
+
+/* Variantes List */
+.variantes-list {
+  padding: 1rem;
+}
+
+.variantes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.variantes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.variante-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--colorSurfaceLowest);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.variante-item:hover {
+  background: var(--colorSurfaceLow);
+}
+
+.variante-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.variante-talla {
+  font-weight: 700;
+  color: var(--colorOnSurface);
+  min-width: 60px;
+}
+
+.variante-color {
+  font-size: 0.85rem;
+}
+
+.variante-sku {
+  font-family: monospace;
+}
+
+.variante-stock {
+  margin: 0 1rem;
+}
+
+.variante-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Mobile Card Group */
+.mobile-product-card-group {
+  background: var(--colorSurfaceLowest);
+  border-radius: 1rem;
+  box-shadow: var(--shadowAmbient);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.mobile-product-card-group .card-header-group {
+  padding: 1rem;
+  cursor: pointer;
+}
+
+.mobile-product-card-group .expand-icon {
+  color: var(--colorOnSurfaceVar);
+  transition: transform 0.3s ease;
+}
+
+.mobile-product-card-group .card-header-group.expanded .expand-icon {
+  transform: rotate(180deg);
+}
+
+.mobile-product-card-group .card-body-group {
+  padding: 0 1rem 1rem;
+}
+
+.mobile-product-card-group .card-body-group.collapse {
+  display: none;
+}
+
+.mobile-product-card-group .card-header-group.expanded + .card-body-group.collapse {
+  display: block;
+}
+
+/* POS Group Card */
+.product-card-group-pos {
+  background: var(--colorSurfaceLowest);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  box-shadow: var(--shadowAmbient);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.product-card-group-pos:hover {
+  background: var(--colorSurfaceLow);
+  transform: translateY(-2px);
+}
+
+.product-card-group-pos .product-thumb {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Selector de Talla en POS */
+#posResultados .card {
+  border: none;
+  box-shadow: var(--shadowAmbient);
+}
+
+#posResultados .card-header {
+  background: var(--colorSurfaceLow);
+  border-bottom: none;
+  padding: 1rem;
+}
+
+#posResultados .btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
