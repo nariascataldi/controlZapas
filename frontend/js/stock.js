@@ -186,20 +186,21 @@ export function limpiarFiltrosTalla() {
 
 function handleLayoutToggle() {
     const isMobile = window.innerWidth < 768;
-    const desktopContainer = document.querySelector('.container.py-2:not(.d-md-none)');
-    const mobileContainer = document.querySelector('.container.py-2.d-md-none');
+    const mainElement = document.querySelector('main#main-content');
+    const desktopLayout = document.getElementById('desktopStockLayout');
+    const mobileContainer = document.getElementById('mobileStockContainer');
     const fab = document.querySelector('.mobile-fab');
     const bottomNav = document.querySelector('.mobile-bottom-nav');
     
-    if (desktopContainer && mobileContainer) {
+    if (desktopLayout && mobileContainer) {
         if (isMobile) {
-            desktopContainer.classList.add('d-none');
-            mobileContainer.classList.remove('d-none');
+            desktopLayout.classList.add('d-none');
+            mobileContainer.style.display = 'block';
             if (fab) fab.classList.remove('d-none');
             if (bottomNav) bottomNav.classList.remove('d-none');
         } else {
-            desktopContainer.classList.remove('d-none');
-            mobileContainer.classList.add('d-none');
+            desktopLayout.classList.remove('d-none');
+            mobileContainer.style.display = 'none';
             if (fab) fab.classList.add('d-none');
             if (bottomNav) bottomNav.classList.add('d-none');
         }
@@ -257,7 +258,7 @@ export function renderStock(lista = inventarioGlobal) {
                 <td class="py-3 ps-3">
                     <div class="d-flex align-items-center gap-3">
                         <div class="stock-thumb bg-white rounded-3 shadow-sm border p-1" style="width: 50px; height: 50px; flex-shrink: 0;" data-pid="${item.producto_id}" data-item="${itemJson}">
-                            <div class="w-100 h-100 bg-light rounded-2 d-flex align-items-center justify-content-center text-muted">
+                            <div class="w-100 h-100 bg-light rounded-2 d-flex align-items-center justify-content-center text-muted" aria-hidden="true">
                                 <i class="bi bi-box-seam"></i>
                             </div>
                         </div>
@@ -284,16 +285,16 @@ export function renderStock(lista = inventarioGlobal) {
                 </td>
                 <td class="py-3 text-end pe-3">
                     <div class="d-flex justify-content-end gap-2">
-                        <button class="btn btn-sm btn-light text-dark border-0 px-2 rounded-pill" title="Ver Galería" onclick="verGaleriaStock(${item.producto_id}, '${item.nombre.replace(/'/g, "\\'")}')">
-                            <i class="bi bi-eye"></i>
+                        <button class="btn btn-sm btn-light text-dark border-0 px-2 rounded-pill" title="Ver Galería" aria-label="Ver Galería" onclick="verGaleriaStock(${item.producto_id}, '${item.nombre.replace(/'/g, "\\'")}')">
+                            <i class="bi bi-eye" aria-hidden="true"></i>
                         </button>
-                        ${isLowStock ? `<button class="btn btn-sm btn-light text-success border-0 px-2 rounded-pill" title="Solicitar Proveedor" onclick="event.stopPropagation(); window.open('https://wa.me/?text=Necesitamos%20reposición%20del%20SKU%20${item.sku}')"><i class="bi bi-whatsapp"></i></button>` : ''}
+                        ${isLowStock ? `<button class="btn btn-sm btn-light text-success border-0 px-2 rounded-pill" title="Solicitar Proveedor" aria-label="Solicitar Proveedor por WhatsApp" onclick="event.stopPropagation(); window.open('https://wa.me/?text=Necesitamos%20reposición%20del%20SKU%20${item.sku}')"><i class="bi bi-whatsapp" aria-hidden="true"></i></button>` : ''}
                         ${isAdmin ? `
-                            <button class="btn btn-sm btn-light text-primary border-0 px-2 rounded-pill" title="Ajustar Stock" onclick="abrirModalAjustarStock(${item.variante_id}, ${item.stock_actual})">
-                                <i class="bi bi-pencil-square"></i>
+                            <button class="btn btn-sm btn-light text-primary border-0 px-2 rounded-pill" title="Ajustar Stock" aria-label="Ajustar Stock" onclick="abrirModalAjustarStock(${item.variante_id}, ${item.stock_actual})">
+                                <i class="bi bi-pencil-square" aria-hidden="true"></i>
                             </button>
-                            <button class="btn btn-sm btn-light text-danger border-0 px-2 rounded-pill" title="Eliminar Variante" onclick="eliminarVariante(${item.variante_id})">
-                                <i class="bi bi-trash"></i>
+                            <button class="btn btn-sm btn-light text-danger border-0 px-2 rounded-pill" title="Eliminar Variante" aria-label="Eliminar Variante" onclick="eliminarVariante(${item.variante_id})">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
                             </button>
                         ` : ''}
                     </div>
@@ -379,7 +380,7 @@ export function renderMobileStock(lista = inventarioGlobal) {
         container.innerHTML += `
             <article class="mobile-product-card">
                 <div class="d-flex gap-3">
-                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center stock-thumb" style="width: 80px; height: 80px; flex-shrink: 0;" data-pid="${item.producto_id}" data-item="${JSON.stringify(item).replace(/"/g, '&quot;')}">
+                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center stock-thumb" style="width: 80px; height: 80px; flex-shrink: 0;" data-pid="${item.producto_id}" data-item="${JSON.stringify(item).replace(/"/g, '&quot;')}" aria-hidden="true">
                         <i class="bi bi-box-seam text-muted" style="font-size: 2rem;"></i>
                     </div>
                     <div class="flex-grow-1">
@@ -387,6 +388,8 @@ export function renderMobileStock(lista = inventarioGlobal) {
                             <h5 class="fw-bold mb-1" style="font-size: 1rem;">${item.nombre}</h5>
                             <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size: 0.6rem;">NEW</span>
                         </div>
+                        <p class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Tasa Rotación</p>
+                        <p class="h3 fw-bold mb-1" id="statRotacion" role="status" aria-live="polite">...</p>
                         <p class="text-muted mb-2" style="font-size: 0.75rem; font-family: monospace;">SKU: ${item.sku}</p>
                         <div class="d-flex gap-2 align-items-center mb-2">
                             <span class="badge bg-light text-dark">Talla ${item.talla}</span>
@@ -440,7 +443,7 @@ export function renderVariantesTemp() {
     variantesTemporales.forEach((v, idx) => {
         lb.innerHTML += `<tr>
             <td>${v.sku}</td><td>${v.color}</td><td>${v.talla}</td><td>${v.stock_actual}</td><td>${v.stock_minimo}</td>
-            <td><button type="button" class="btn btn-sm btn-danger py-0" onclick="variantesTemporales.splice(${idx},1); renderVariantesTemp()"><i class="bi bi-x"></i></button></td>
+            <td><button type="button" class="btn btn-sm btn-danger py-0" aria-label="Eliminar variante" onclick="variantesTemporales.splice(${idx},1); renderVariantesTemp()"><i class="bi bi-x" aria-hidden="true"></i></button></td>
         </tr>`;
     });
 }
