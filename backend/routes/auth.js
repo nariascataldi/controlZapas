@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const db = require('../db');
+const prisma = require('../prisma');
 
 router.post('/login', async (req, res) => {
     const { nombre, password } = req.body;
@@ -14,7 +14,7 @@ router.post('/login', async (req, res) => {
 
     try {
         console.log('Finding user...');
-        const user = await db.usuario.findUnique({
+        const user = await prisma.usuario.findUnique({
             where: { nombre }
         });
         console.log('User found:', !!user);
@@ -23,13 +23,13 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
-        const validPassword = bcrypt.compareSync(password, user.password_hash);
+        const validPassword = bcrypt.compareSync(password, user.passwordHash);
         if (!validPassword) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
         const token = jwt.sign(
-            { id: user.id, nombre: user.nombre, rol: user.rol, porcentajeComision: user.porcentaje_comision },
+            { id: user.id, nombre: user.nombre, rol: user.rol, porcentajeComision: user.porcentajeComision },
             process.env.JWT_SECRET,
             { expiresIn: '12h' }
         );
@@ -41,7 +41,7 @@ router.post('/login', async (req, res) => {
                 id: user.id,
                 nombre: user.nombre,
                 rol: user.rol,
-                porcentajeComision: user.porcentaje_comision
+                porcentajeComision: user.porcentajeComision
             }
         });
     } catch (err) {

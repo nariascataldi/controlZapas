@@ -46,7 +46,7 @@ if (isVercel) {
     });
 }
 
-const prisma = require('./prisma');
+const prisma = require('./database');
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'controlZapas API is running', database: 'PostgreSQL' });
@@ -80,14 +80,12 @@ app.use('/api/productos', require('./routes/imagenes'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/export', require('./routes/export'));
 
-if (!isVercel) {
-    if (require.main === module) {
-        crearAdminPorDefecto().then(() => {
-            app.listen(PORT, () => {
-                console.log(`Servidor de controlZapas corriendo en http://localhost:${PORT}`);
-            });
+module.exports = app;
+
+if (!isVercel && require.main === module) {
+    crearAdminPorDefecto().then(() => {
+        app.listen(PORT, () => {
+            console.log(`Servidor de controlZapas corriendo en http://localhost:${PORT}`);
         });
-    }
-} else {
-    module.exports = app;
+    });
 }

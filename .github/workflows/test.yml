@@ -66,6 +66,8 @@ jobs:
           JWT_SECRET: test_secret
           NODE_ENV: test
           CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+          SUPABASE_URL: https://uytlmgqqvdvcvwvchvcw.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
   a11y:
     runs-on: ubuntu-latest
