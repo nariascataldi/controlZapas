@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
@@ -29,8 +31,42 @@ const corsOptions = {
     credentials: true
 };
 
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+            fontSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+            connectSrc: ["'self'", 'https://controlzapas-api.onrender.com'],
+        },
+    },
+    crossOriginEmbedderPolicy: false,
+}));
+
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 500,
+    message: { error: 'Demasiadas solicitudes, intenta más tarde' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    message: { error: 'Demasiados intentos de login, intenta más tarde' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+});
+
+app.use(globalLimiter);
 
 if (isVercel) {
     app.use('/uploads', express.static(path.join(__dirname, '../frontend/uploads')));
@@ -72,13 +108,18 @@ async function crearAdminPorDefecto() {
     }
 }
 
-app.use('/api/auth', require('./routes/auth').router);
+app.use('/api/auth', authLimiter, require('./routes/auth').router);
 app.use('/api/productos', require('./routes/productos'));
 app.use('/api/ventas', require('./routes/ventas'));
 app.use('/api/usuarios', require('./routes/usuarios'));
 app.use('/api/productos', require('./routes/imagenes'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/export', require('./routes/export'));
+
+app.use((err, req, res, next) => {
+    console.error('Error:', err.message);
+    res.status(500).json({ error: 'Error interno del servidor' });
+});
 
 module.exports = app;
 
