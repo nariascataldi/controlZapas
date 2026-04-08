@@ -2,6 +2,13 @@ import { formatCurrency, getImageUrl } from './utils.js';
 import { getUser } from './auth.js';
 import { fetchAPI, API_URL } from './api.js';
 
+function escapeHtml(text) {
+    if (text == null) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
 export function agruparProductos(lista) {
     const grupos = {};
     
@@ -34,8 +41,9 @@ export function agruparProductos(lista) {
         grupo.variantes.sort((a, b) => {
             const ta = parseFloat(a.talla);
             const tb = parseFloat(b.talla);
-            if (!isNaN(ta) && !isNaN(tb)) return ta - tb;
-            return a.talla.localeCompare(b.talla);
+            const bothNumeric = !isNaN(ta) && !isNaN(tb);
+            if (bothNumeric) return ta - tb;
+            return String(a.talla).localeCompare(String(b.talla));
         });
     });
     
@@ -71,7 +79,7 @@ export function crearCardProductoAgrupada(grupo, config = {}) {
     
     return `
         <div class="product-card-group" data-producto-id="${grupo.producto_id}" data-variantes="${varianteJson}">
-            <div class="card-header-group" onclick="toggleExpandCard(this)">
+            <div class="card-header-group" onclick="toggleExpandCard(this)" onkeydown="if(event.key==='Enter'||event.key===' '){toggleExpandCard(this);event.preventDefault()}" tabindex="0" role="button" aria-expanded="false">
                 <div class="d-flex align-items-center gap-3 flex-grow-1">
                     <div class="product-thumb bg-light rounded-3 d-flex align-items-center justify-content-center" 
                          style="width: ${compact ? '50px' : '60px'}; height: ${compact ? '50px' : '60px'}; flex-shrink: 0;"
@@ -140,7 +148,7 @@ function crearItemVariante(variante, config) {
             <div class="variante-actions">
                 ${!sinStock && onAgregarCarrito ? `
                     <button class="btn btn-sm btn-outline-primary rounded-pill" 
-                            onclick="event.stopPropagation(); onAgregarVariante(${variante.variante_id})"
+                            onclick="event.stopPropagation(); onAgregarCarrito(${variante.variante_id})"
                             title="Agregar al carrito">
                         <i class="bi bi-cart-plus"></i>
                     </button>
@@ -231,7 +239,7 @@ export function crearCardMobileAgrupada(grupo, config = {}) {
     
     return `
         <article class="mobile-product-card-group">
-            <div class="card-header-group" onclick="this.classList.toggle('expanded'); this.nextElementSibling.classList.toggle('show')">
+            <div class="card-header-group" onclick="this.classList.toggle('expanded'); this.nextElementSibling.classList.toggle('show')" onkeydown="if(event.key==='Enter'||event.key===' '){this.classList.toggle('expanded'); this.nextElementSibling.classList.toggle('show');event.preventDefault()}" tabindex="0" role="button" aria-expanded="false">
                 <div class="d-flex gap-3">
                     <div class="bg-light rounded-3 d-flex align-items-center justify-content-center stock-thumb" 
                          style="width: 80px; height: 80px; flex-shrink: 0;" data-pid="${grupo.producto_id}">

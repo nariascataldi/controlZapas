@@ -23,12 +23,27 @@ export async function buscarPos(fueEnter = false) {
         }
 
         const grupos = agruparProductos(res);
-        const userRole = getUser().rol;
+        const userRole = getUser()?.rol;
         const isAdmin = userRole === 'ADMIN';
 
         if (fueEnter && query.length > 0) {
             const conStock = grupos.filter(g => g.variantes.some(v => v.stock_actual > 0));
-            if (conStock.length === 1) {
+            
+            // Buscar match exacto por SKU
+            const exactaSKU = grupos.find(g => g.variantes.some(v => v.sku && v.sku.toLowerCase() === query.toLowerCase()));
+            
+            if (exactaSKU && exactaSKU.variantes.some(v => v.stock_actual > 0)) {
+                const variantesStock = exactaSKU.variantes.filter(v => v.stock_actual > 0);
+                if (variantesStock.length === 1) {
+                    agregarAlCarrito(variantesStock[0]);
+                } else {
+                    mostrarSelectorTallePOS(exactaSKU);
+                }
+                inputEl.value = '';
+                const scannerEl = document.querySelector('.scanner-input');
+                if (scannerEl) { scannerEl.classList.add('scanner-flash'); setTimeout(() => scannerEl.classList.remove('scanner-flash'), 500); }
+                return buscarPos(false);
+            } else if (conStock.length === 1) {
                 const grupo = conStock[0];
                 const variantesStock = grupo.variantes.filter(v => v.stock_actual > 0);
                 if (variantesStock.length === 1) {
@@ -41,7 +56,8 @@ export async function buscarPos(fueEnter = false) {
                 if (scannerEl) { scannerEl.classList.add('scanner-flash'); setTimeout(() => scannerEl.classList.remove('scanner-flash'), 500); }
                 return buscarPos(false);
             } else if (conStock.length > 1) {
-                mostrarSelectorTallePOS(conStock[0]);
+                // Mostrar selector con todos los productos que tienen stock
+                mostrarSelectorProductoPOS(conStock);
                 inputEl.value = '';
                 return buscarPos(false);
             }
@@ -61,7 +77,7 @@ export async function buscarPos(fueEnter = false) {
             container.innerHTML += `
                 <div class="col-12 col-md-6">
                     <div class="product-card-group-pos d-flex align-items-center gap-3 ${!tieneStock ? 'opacity-50' : ''}" 
-                         data-variantes="${variantesJson}" onclick="event.stopPropagation(); mostrarSelectorTallePOS(${grupo.producto_id})">
+                         data-variantes="${variantesJson}" onclick="event.stopPropagation(); mostrarSelectorTallePOS(JSON.parse('${variantesJson}'))">
                         <div class="product-thumb bg-light rounded-3" style="width:50px;height:50px;flex-shrink:0;" data-pid="${grupo.producto_id}">
                             <i class="bi bi-box-seam text-muted d-flex align-items-center justify-content-center h-100"></i>
                         </div>
@@ -124,6 +140,42 @@ function mostrarSelectorTallePOS(grupo) {
         </div>
     `;
 }
+
+function mostrarSelectorProductoPOS(grupos) {
+    const container = document.getElementById('posResultados');
+    
+    container.innerHTML = `
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Selecciona un producto</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="buscarPos()">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Múltiples productos encontrados:</p>
+                    <div class="d-flex flex-column gap-2">
+                        ${grupos.map(g => {
+                            const variantesStock = g.variantes.filter(v => v.stock_actual > 0);
+                            const totalStock = variantesStock.reduce((sum, v) => sum + v.stock_actual, 0);
+                            const variantesJson = JSON.stringify(g).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                            return `
+                                <button class="btn btn-outline-primary d-flex justify-content-between align-items-center p-3"
+                                        onclick="mostrarSelectorTallePOS(JSON.parse('${variantesJson}'))">
+                                    <span class="fw-bold">${g.nombre}</span>
+                                    <span class="badge bg-success">${totalStock} uds</span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+window.mostrarSelectorProductoPOS = mostrarSelectorProductoPOS;
 
 export async function cargarThumbsProductos(items) {
     const productIds = [...new Set(items.map(i => i.producto_id))];

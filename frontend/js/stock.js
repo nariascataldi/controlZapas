@@ -66,7 +66,7 @@ export async function cargarInventario() {
         renderMobileStock();
         cargarStatsInventario();
 
-        if (getUser().rol === 'ADMIN') {
+        if (getUser()?.rol === 'ADMIN') {
             document.getElementById('btnAdminNuevoProd').classList.remove('d-none');
         }
 
@@ -215,7 +215,7 @@ function bgAlert(stock, min) {
 }
 
 export function generarLinkWhatsapp(prod) {
-    const userRole = getUser().rol;
+    const userRole = getUser()?.rol;
     const precio = userRole === 'ADMIN' ? prod.precio_mayorista : prod.precio_minorista;
     const msg = `¡Hola! Te confirmo que tenemos disponibles las ${prod.nombre} en talla ${prod.talla}. El precio es de ${formatCurrency(precio)}. ¿Te las reservo?`;
     const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
@@ -851,7 +851,11 @@ export function exportarInventario(tipo) {
     descargarArchivo(`${API_URL}/export/inventario/${tipo}?${query}`, filename);
 }
 
-// Exponer variables de estado para el onclick del HTML
-window.inventarioGlobal = inventarioGlobal;
+// Exponer inventario global para acceso externo (lectura)
+Object.defineProperty(window, 'inventarioGlobal', {
+    get: () => inventarioGlobal,
+    set: (val) => { inventarioGlobal = val; },
+    configurable: true
+});
 window.variantesTemporales = variantesTemporales;
 window.imagenesTemporales = imagenesTemporales;
