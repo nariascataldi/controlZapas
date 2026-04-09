@@ -39,7 +39,7 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
             fontSrc: ["'self'", 'https://cdn.jsdelivr.net'],
-            connectSrc: ["'self'", 'https://controlzapas-api.onrender.com'],
+            connectSrc: ["'self'", 'http://localhost:3000', 'https://controlzapas-api.onrender.com'],
         },
     },
     crossOriginEmbedderPolicy: false,
@@ -68,6 +68,14 @@ const authLimiter = rateLimit({
 
 app.use(globalLimiter);
 
+app.use('/api/auth', authLimiter, require('./routes/auth').router);
+app.use('/api/productos', require('./routes/productos'));
+app.use('/api/ventas', require('./routes/ventas'));
+app.use('/api/usuarios', require('./routes/usuarios'));
+app.use('/api/productos', require('./routes/imagenes'));
+app.use('/api/stats', require('./routes/stats'));
+app.use('/api/export', require('./routes/export'));
+
 if (isVercel) {
     app.use('/uploads', express.static(path.join(__dirname, '../frontend/uploads')));
     app.use(express.static(path.join(__dirname, '../frontend')));
@@ -89,10 +97,7 @@ app.get('/api/health', (req, res) => {
 });
 
 async function crearAdminPorDefecto() {
-    const adminExists = await prisma.usuario.findFirst({
-        where: { rol: 'ADMIN' }
-    });
-
+    const adminExists = await prisma.usuario.findFirst();
     if (!adminExists) {
         const adminPass = 'admin123';
         const hash = bcrypt.hashSync(adminPass, 10);
@@ -100,7 +105,7 @@ async function crearAdminPorDefecto() {
             data: {
                 nombre: 'admin',
                 passwordHash: hash,
-                rol: 'ADMIN',
+                rol: 'VENDEDOR',
                 porcentajeComision: 0
             }
         });
