@@ -34,6 +34,22 @@ export function verificarAcceso(rolRequerido = null) {
 if (window.location.pathname.endsWith('login.html')) {
     const form = document.getElementById('loginForm');
     if (form) {
+        const userInput = document.getElementById('inputUser');
+        const passwordInput = document.getElementById('inputPassword');
+
+        userInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                passwordInput?.focus();
+            }
+        });
+
+        passwordInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                form.requestSubmit();
+            }
+        });
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const u = document.getElementById('inputUser').value;

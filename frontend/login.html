@@ -26,11 +26,11 @@
 
         <form id="loginForm" class="login-form">
             <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="inputUser" placeholder="Usuario" required autocomplete="username" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('inputPassword').focus()}">
+                <input type="text" class="form-control" id="inputUser" placeholder="Usuario" required autocomplete="username">
                 <label for="inputUser"><i class="bi bi-person me-2" aria-hidden="true"></i>Usuario</label>
             </div>
             <div class="form-floating mb-4">
-                <input type="password" class="form-control" id="inputPassword" placeholder="Contraseña" required autocomplete="current-password" onkeydown="if(event.key==='Enter'){document.getElementById('loginForm').requestSubmit()}">
+                <input type="password" class="form-control" id="inputPassword" placeholder="Contraseña" required autocomplete="current-password">
                 <label for="inputPassword"><i class="bi bi-lock me-2" aria-hidden="true"></i>Contraseña</label>
             </div>
 
