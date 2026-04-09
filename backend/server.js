@@ -37,7 +37,7 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
             styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
             fontSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.gstatic.com'],
-            connectSrc: ["'self'", 'http://localhost:3000', 'https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://*.supabase.co'],
+            connectSrc: ["'self'", 'http://localhost:3000', 'https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://*.supabase.co', 'https://cdn.jsdelivr.net'],
             upgradeInsecureRequests: [],
         },
     },
