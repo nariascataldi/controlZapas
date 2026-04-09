@@ -45,7 +45,7 @@
                                        placeholder="Escanear código o buscar modelo..." autocomplete="off"
                                        aria-label="Buscar producto por nombre o código"
                                        style="font-size:1rem;">
-                                <button class="btn btn-primary btn-premium px-4" aria-label="Buscar producto" onclick="buscarPos()">
+                                <button class="btn btn-primary btn-premium px-4" id="buscarPosBtn" aria-label="Buscar producto">
                                     <i class="bi bi-search" aria-hidden="true"></i>
                                 </button>
                             </div>
@@ -114,8 +114,8 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="text-muted small fw-medium">Lista de precios</span>
                                 <div class="pill-switch" role="group" aria-label="Tipo de precio">
-                                    <button type="button" class="pill-option active" data-tipo="minorista" onclick="cambiarTipoPrecio(this)">Minorista</button>
-                                    <button type="button" class="pill-option" data-tipo="mayorista" onclick="cambiarTipoPrecio(this)">Mayorista</button>
+                                    <button type="button" class="pill-option active" data-tipo="minorista">Minorista</button>
+                                    <button type="button" class="pill-option" data-tipo="mayorista">Mayorista</button>
                                 </div>
                             </div>
 
@@ -127,13 +127,13 @@
                                 <div class="col-6">
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-light border-0 text-primary fw-bold" style="font-size:0.8rem;">%</span>
-                                        <input type="number" class="form-control bg-light border-0 text-end fw-medium" id="descPromedio" min="0" max="100" placeholder="0" oninput="actualizarCarrito()" aria-label="Porcentaje de descuento">
+                                        <input type="number" class="form-control bg-light border-0 text-end fw-medium" id="descPromedio" min="0" max="100" placeholder="0" aria-label="Porcentaje de descuento">
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-light border-0 text-success fw-bold" style="font-size:0.8rem;">$</span>
-                                        <input type="number" class="form-control bg-light border-0 text-end fw-medium" id="descFijo" min="0" placeholder="0" oninput="actualizarCarrito()" aria-label="Monto de descuento fijo">
+                                        <input type="number" class="form-control bg-light border-0 text-end fw-medium" id="descFijo" min="0" placeholder="0" aria-label="Monto de descuento fijo">
                                     </div>
                                 </div>
                             </div>
@@ -200,7 +200,7 @@
                         <i class="bi bi-whatsapp fs-5 me-2"></i> Enviar Recibo por WhatsApp
                     </a>
                     
-                    <button type="button" class="btn btn-light w-100 py-3 rounded-3 fw-medium" onclick="nuevaVentaPOS()">
+                    <button type="button" class="btn btn-light w-100 py-3 rounded-3 fw-medium" id="btnNuevaVenta">
                         Realizar otra venta
                     </button>
                 </div>

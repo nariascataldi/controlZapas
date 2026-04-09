@@ -15,10 +15,12 @@ if (window.location.pathname.endsWith('stock.html')) {
 }
 
 if (window.location.pathname.endsWith('ventas.html')) {
-    import('./pos.js').then(m => {
+    import('./pos.js').then(async m => {
+        const { debounce } = await import('./utils.js');
         m.buscarPos();
         
         const inputEl = document.getElementById('posBuscador');
+        const searchBtn = document.getElementById('buscarPosBtn');
         if (inputEl) {
             inputEl.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
@@ -26,8 +28,24 @@ if (window.location.pathname.endsWith('ventas.html')) {
                     m.buscarPos(true);
                 }
             });
-            inputEl.addEventListener('input', () => m.buscarPos(false));
+            inputEl.addEventListener('input', debounce(() => m.buscarPos(false), 300));
         }
+
+        if (searchBtn) {
+            searchBtn.addEventListener('click', () => m.buscarPos(true));
+        }
+
+        // Tipo de Precio
+        document.querySelectorAll('.pill-option').forEach(btn => {
+            btn.addEventListener('click', () => m.cambiarTipoPrecio(btn));
+        });
+
+        // Descuentos
+        document.getElementById('descPromedio')?.addEventListener('input', () => m.actualizarCarrito());
+        document.getElementById('descFijo')?.addEventListener('input', () => m.actualizarCarrito());
+
+        // Botón Nueva Venta (Modal)
+        document.getElementById('btnNuevaVenta')?.addEventListener('click', () => m.nuevaVentaPOS());
     });
 }
 

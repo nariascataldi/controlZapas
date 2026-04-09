@@ -77,7 +77,7 @@ export async function buscarPos(fueEnter = false) {
             container.innerHTML += `
                 <div class="col-12 col-md-6">
                     <div class="product-card-group-pos d-flex align-items-center gap-3 ${!tieneStock ? 'opacity-50' : ''}" 
-                         data-variantes="${variantesJson}" onclick="event.stopPropagation(); mostrarSelectorTallePOS(JSON.parse('${variantesJson}'))">
+                         data-variantes="${variantesJson}">
                         <div class="product-thumb bg-light rounded-3" style="width:50px;height:50px;flex-shrink:0;" data-pid="${grupo.producto_id}">
                             <i class="bi bi-box-seam text-muted d-flex align-items-center justify-content-center h-100"></i>
                         </div>
@@ -120,7 +120,7 @@ function mostrarSelectorTallePOS(grupo) {
             <div class="card">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <span class="fw-bold">${grupo.nombre}</span>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="buscarPos()">
+                    <button class="btn btn-sm btn-outline-secondary btn-back-pos">
                         <i class="bi bi-arrow-left"></i> Volver
                     </button>
                 </div>
@@ -128,8 +128,8 @@ function mostrarSelectorTallePOS(grupo) {
                     <p class="text-muted small mb-3">Selecciona la talla:</p>
                     <div class="d-flex flex-wrap gap-2">
                         ${variantesStock.map(v => `
-                            <button class="btn btn-lg btn-outline-primary rounded-pill" 
-                                    onclick="agregarAlCarritoPorVarianteId(${v.variante_id})">
+                            <button class="btn btn-lg btn-outline-primary rounded-pill btn-talle-pos" 
+                                    data-vid="${v.variante_id}">
                                 Talla ${v.talla}
                                 <span class="badge bg-success ms-1">${v.stock_actual}</span>
                             </button>
@@ -149,7 +149,7 @@ function mostrarSelectorProductoPOS(grupos) {
             <div class="card">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <span class="fw-bold">Selecciona un producto</span>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="buscarPos()">
+                    <button class="btn btn-sm btn-outline-secondary btn-back-pos">
                         <i class="bi bi-arrow-left"></i> Volver
                     </button>
                 </div>
@@ -161,8 +161,8 @@ function mostrarSelectorProductoPOS(grupos) {
                             const totalStock = variantesStock.reduce((sum, v) => sum + v.stock_actual, 0);
                             const variantesJson = JSON.stringify(g).replace(/'/g, "\\'").replace(/"/g, '&quot;');
                             return `
-                                <button class="btn btn-outline-primary d-flex justify-content-between align-items-center p-3"
-                                        onclick="mostrarSelectorTallePOS(JSON.parse('${variantesJson}'))">
+                                <button class="btn btn-outline-primary d-flex justify-content-between align-items-center p-3 btn-select-product-pos"
+                                        data-variantes='${variantesJson}'>
                                     <span class="fw-bold">${g.nombre}</span>
                                     <span class="badge bg-success">${totalStock} uds</span>
                                 </button>
@@ -292,14 +292,14 @@ export function actualizarCarrito() {
                     <div class="text-muted" style="font-size:0.7rem;">${item.sku} · ${formatCurrency(precioListado)} c/u</div>
                 </div>
                 <div class="qty-controls">
-                    <button type="button" class="qty-btn minus" onclick="cambiarCant(${idx}, -1)">−</button>
+                    <button type="button" class="qty-btn minus" data-idx="${idx}">−</button>
                     <span class="fw-bold" style="font-size:0.9rem; min-width:20px; text-align:center;">${item.cantidad}</span>
-                    <button type="button" class="qty-btn plus" onclick="cambiarCant(${idx}, 1)">+</button>
+                    <button type="button" class="qty-btn plus" data-idx="${idx}">+</button>
                 </div>
                 <div class="text-end" style="min-width:70px;">
                     <div class="fw-bold color-dark" style="font-size:0.85rem;">${formatCurrency(totalFila)}</div>
                 </div>
-                <button type="button" class="btn btn-sm p-0 text-danger" style="opacity:0.5; font-size:0.8rem;" onclick="quitarCart(${idx})" title="Quitar item">
+                <button type="button" class="btn btn-sm p-0 text-danger btn-remove-item" style="opacity:0.5; font-size:0.8rem;" data-idx="${idx}" title="Quitar item">
                     <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
             </div>
@@ -477,6 +477,58 @@ if (window.location.pathname.endsWith('ventas.html')) {
         if (inputEscanner) {
             inputEscanner.focus();
         }
+
+        // Delegación de eventos para resultados de búsqueda
+        const containerResultados = document.getElementById('posResultados');
+        containerResultados?.addEventListener('click', (e) => {
+            // Click en tarjeta de producto
+            const productCard = e.target.closest('.product-card-group-pos');
+            if (productCard) {
+                e.stopPropagation();
+                const variantes = JSON.parse(productCard.dataset.variantes || '{}');
+                mostrarSelectorTallePOS(variantes);
+                return;
+            }
+
+            // Click en botón de volver (en selectores de talle/producto)
+            const backBtn = e.target.closest('.btn-back-pos');
+            if (backBtn) {
+                buscarPos();
+                return;
+            }
+
+            // Click en talle específico
+            const talleBtn = e.target.closest('.btn-talle-pos');
+            if (talleBtn) {
+                const vid = talleBtn.dataset.vid;
+                if (vid) agregarAlCarritoPorVarianteId(parseInt(vid));
+                return;
+            }
+
+            // Click en selección de producto (cuando hay varios con el mismo nombre)
+            const productSelectBtn = e.target.closest('.btn-select-product-pos');
+            if (productSelectBtn) {
+                const vJson = productSelectBtn.dataset.variantes;
+                if (vJson) mostrarSelectorTallePOS(JSON.parse(vJson));
+                return;
+            }
+        });
+
+        // Delegación de eventos para el carrito
+        const containerCarrito = document.getElementById('cartItems');
+        containerCarrito?.addEventListener('click', (e) => {
+            const btnMinus = e.target.closest('.qty-btn.minus');
+            const btnPlus = e.target.closest('.qty-btn.plus');
+            const btnRemove = e.target.closest('.btn-remove-item');
+
+            if (btnMinus) {
+                cambiarCant(parseInt(btnMinus.dataset.idx), -1);
+            } else if (btnPlus) {
+                cambiarCant(parseInt(btnPlus.dataset.idx), 1);
+            } else if (btnRemove) {
+                quitarCart(parseInt(btnRemove.dataset.idx));
+            }
+        });
     });
 }
 
