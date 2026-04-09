@@ -1,42 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const { createClient } = require('@supabase/supabase-js');
+const prisma = require('../prisma');
 const { verificarToken, soloAdmin } = require('./auth');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-function toCamel(obj) {
-  if (!obj) return null;
-  if (Array.isArray(obj)) return obj.map(toCamel);
-  const result = {};
-  for (const [key, value] of Object.entries(obj)) {
-    const camelKey = key.replace(/_([a-z])/g, (_, l) => l.toUpperCase());
-    result[camelKey] = value;
-  }
-  return result;
-}
 
 router.get('/kpis', verificarToken, soloAdmin, async (req, res) => {
   try {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const { data: ventas, error } = await supabase
-      .from('ventas')
-      .select('total, comision_calculada')
-      .gte('fecha', startOfMonth.toISOString());
-
-    if (error) throw error;
+    const ventas = await prisma.venta.findMany({
+      where: {
+        fecha: { gte: startOfMonth }
+      },
+      select: { total: true, comisionCalculada: true }
+    });
 
     let ventasTotalesMes = 0;
     let comisionesPorPagar = 0;
 
     if (ventas) {
       ventasTotalesMes = ventas.reduce((sum, v) => sum + (v.total || 0), 0);
-      comisionesPorPagar = ventas.reduce((sum, v) => sum + (v.comision_calculada || 0), 0);
+      comisionesPorPagar = ventas.reduce((sum, v) => sum + (v.comisionCalculada || 0), 0);
     }
 
     const gananciasMes = ventasTotalesMes - comisionesPorPagar;
@@ -54,27 +38,25 @@ router.get('/kpis', verificarToken, soloAdmin, async (req, res) => {
 
 router.get('/rendimiento-vendedores', verificarToken, soloAdmin, async (req, res) => {
   try {
-    const { data: usuarios, error } = await supabase
-      .from('usuarios')
-      .select('id, nombre, porcentaje_comision')
-      .eq('rol', 'VENDEDOR');
-
-    if (error) throw error;
+    const usuarios = await prisma.usuario.findMany({
+      where: { rol: 'VENDEDOR' },
+      select: { id: true, nombre: true, porcentajeComision: true }
+    });
 
     const rendimiento = await Promise.all(usuarios.map(async (u) => {
-      const { data: ventas } = await supabase
-        .from('ventas')
-        .select('total, comision_calculada')
-        .eq('vendedor_id', u.id);
+      const ventas = await prisma.venta.findMany({
+        where: { vendedorId: u.id },
+        select: { total: true, comisionCalculada: true }
+      });
 
       const cantidad = ventas?.length || 0;
       const total_vendido = ventas?.reduce((sum, v) => sum + (v.total || 0), 0) || 0;
-      const total_comisiones = ventas?.reduce((sum, v) => sum + (v.comision_calculada || 0), 0) || 0;
+      const total_comisiones = ventas?.reduce((sum, v) => sum + (v.comisionCalculada || 0), 0) || 0;
 
       return {
         id: u.id,
         nombre: u.nombre,
-        porcentaje_comision: u.porcentaje_comision,
+        porcentaje_comision: u.porcentajeComision,
         cantidad_ventas: cantidad,
         total_vendido,
         total_comisiones
@@ -91,17 +73,15 @@ router.get('/rendimiento-vendedores', verificarToken, soloAdmin, async (req, res
 
 router.get('/historial-clientes', verificarToken, soloAdmin, async (req, res) => {
   try {
-    const { data: clientes, error } = await supabase
-      .from('clientes')
-      .select('id, nombre, contacto');
-
-    if (error) throw error;
+    const clientes = await prisma.cliente.findMany({
+      select: { id: true, nombre: true, contacto: true }
+    });
 
     const historial = await Promise.all(clientes.map(async (c) => {
-      const { data: ventas } = await supabase
-        .from('ventas')
-        .select('total, fecha')
-        .eq('cliente_id', c.id);
+      const ventas = await prisma.venta.findMany({
+        where: { clienteId: c.id },
+        select: { total: true, fecha: true }
+      });
 
       if (!ventas || ventas.length === 0) return null;
 
@@ -134,21 +114,19 @@ router.get('/historial-clientes', verificarToken, soloAdmin, async (req, res) =>
 
 router.get('/top-productos', verificarToken, soloAdmin, async (req, res) => {
   try {
-    const { data: detalles, error } = await supabase
-      .from('venta_detalles')
-      .select(`
-        cantidad,
-        precio_unitario,
-        variante:variantes (
-          producto:productos (
-            id,
-            nombre,
-            marca
-          )
-        )
-      `);
-
-    if (error) throw error;
+    const detalles = await prisma.ventaDetalle.findMany({
+      select: {
+        cantidad: true,
+        precioUnitario: true,
+        variante: {
+          include: {
+            producto: {
+              select: { id: true, nombre: true, marca: true }
+            }
+          }
+        }
+      }
+    });
 
     const productosMap = {};
 
@@ -167,7 +145,7 @@ router.get('/top-productos', verificarToken, soloAdmin, async (req, res) => {
           };
         }
         productosMap[producto.id].unidades_vendidas += d.cantidad;
-        productosMap[producto.id].ingresos_generados += d.cantidad * d.precio_unitario;
+        productosMap[producto.id].ingresos_generados += d.cantidad * d.precioUnitario;
       });
     }
 
@@ -190,24 +168,31 @@ router.get('/inventario', verificarToken, async (req, res) => {
       const hace30dias = new Date();
       hace30dias.setDate(hace30dias.getDate() - 30);
 
-      const [{ count: variantes }, { data: ventasUltimoMes }] = await Promise.all([
-        supabase.from('variantes').select('*', { count: 'exact', head: true }),
-        supabase.from('venta_detalles')
-          .select('cantidad')
-          .gte('venta(fecha)', hace30dias.toISOString())
+      const [variantesCount, ventasUltimoMes] = await Promise.all([
+        prisma.variante.count(),
+        prisma.ventaDetalle.findMany({
+          where: {
+            venta: { fecha: { gte: hace30dias } }
+          },
+          select: { cantidad: true }
+        })
       ]);
 
       const unidadesVendidas = ventasUltimoMes?.reduce((sum, d) => sum + d.cantidad, 0) || 0;
-      const rotacion = variantes > 0 ? (unidadesVendidas / variantes).toFixed(1) : 0;
+      const rotacion = variantesCount > 0 ? (unidadesVendidas / variantesCount).toFixed(1) : 0;
 
       return res.json({ rotacion: parseFloat(rotacion) });
     }
 
-    const { data: variantes, error: varError } = await supabase
-      .from('variantes')
-      .select('stock_actual, stock_minimo, producto(precio_mayorista, precio_minorista)');
-
-    if (varError) throw varError;
+    const variantes = await prisma.variante.findMany({
+      select: {
+        stockActual: true,
+        stockMinimo: true,
+        producto: {
+          select: { precioMayorista: true, precioMinorista: true }
+        }
+      }
+    });
 
     let totalSku = 0;
     let valorInventario = 0;
@@ -216,19 +201,21 @@ router.get('/inventario', verificarToken, async (req, res) => {
     if (variantes) {
       totalSku = variantes.length;
       variantes.forEach(v => {
-        const precio = v.producto?.precio_mayorista || v.producto?.precio_minorista || 0;
-        valorInventario += (v.stock_actual || 0) * precio;
-        if ((v.stock_actual || 0) <= (v.stock_minimo || 0)) stockBajo++;
+        const precio = v.producto?.precioMayorista || v.producto?.precioMinorista || 0;
+        valorInventario += (v.stockActual || 0) * precio;
+        if ((v.stockActual || 0) <= (v.stockMinimo || 0)) stockBajo++;
       });
     }
 
     const hace30dias = new Date();
     hace30dias.setDate(hace30dias.getDate() - 30);
 
-    const { data: ventasUltimoMes } = await supabase
-      .from('venta_detalles')
-      .select('cantidad')
-      .gte('venta(fecha)', hace30dias.toISOString());
+    const ventasUltimoMes = await prisma.ventaDetalle.findMany({
+      where: {
+        venta: { fecha: { gte: hace30dias } }
+      },
+      select: { cantidad: true }
+    });
 
     const unidadesVendidas = ventasUltimoMes?.reduce((sum, d) => sum + d.cantidad, 0) || 0;
     const rotacion = totalSku > 0 ? (unidadesVendidas / totalSku).toFixed(1) : 0;
