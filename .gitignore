@@ -78,7 +78,9 @@ backend/zapatillas_batch*.json
 # Supabase local config (puede contener credenciales)
 supabase/.temp/
 supabase/config.toml
+backend/supabase/.temp
 
 # Agent run logs
 runs.json
 run_logs.txt
+backend/.agents
