@@ -65,7 +65,7 @@ const authLimiter = rateLimit({
     skipSuccessfulRequests: true,
 });
 
-app.use(globalLimiter);
+app.use('/api', globalLimiter);
 
 app.use('/api/auth', authLimiter, require('./routes/auth').router);
 app.use('/api/productos', require('./routes/productos'));
