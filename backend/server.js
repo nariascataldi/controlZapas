@@ -16,8 +16,6 @@ const vercelAppName = process.env.VERCEL_PROJECT_PRODUCTION_URL?.split('.')[0];
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:8080',
-    'https://controlzapas.onrender.com',
-    'https://controlzapas-api.onrender.com',
 ];
 
 if (vercelAppName) {
@@ -36,10 +34,11 @@ app.use(helmet({
         directives: {
             defaultSrc: ["'self'"],
             imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-            scriptSrc: ["'self'", "'unsafe-inline'"],
-            styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
-            fontSrc: ["'self'", 'https://cdn.jsdelivr.net'],
-            connectSrc: ["'self'", 'http://localhost:3000', 'https://controlzapas-api.onrender.com'],
+            scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+            styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
+            fontSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.gstatic.com'],
+            connectSrc: ["'self'", 'http://localhost:3000', 'https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://*.supabase.co'],
+            upgradeInsecureRequests: [],
         },
     },
     crossOriginEmbedderPolicy: false,
@@ -113,13 +112,7 @@ async function crearAdminPorDefecto() {
     }
 }
 
-app.use('/api/auth', authLimiter, require('./routes/auth').router);
-app.use('/api/productos', require('./routes/productos'));
-app.use('/api/ventas', require('./routes/ventas'));
-app.use('/api/usuarios', require('./routes/usuarios'));
-app.use('/api/productos', require('./routes/imagenes'));
-app.use('/api/stats', require('./routes/stats'));
-app.use('/api/export', require('./routes/export'));
+// Routes registered above (lines 72-78) — duplicate block removed
 
 app.use((err, req, res, next) => {
     console.error('Error:', err.message);

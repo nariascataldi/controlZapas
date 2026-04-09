@@ -8,16 +8,12 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum Rol {
-  ADMIN
-  VENDEDOR
-}
-
+// Using String instead of enum due to Supabase pooler compatibility
 model Usuario {
   id                Int       @id @default(autoincrement())
   nombre            String    @unique
   passwordHash      String    @map("password_hash")
-  rol               Rol       @default(VENDEDOR)
+  rol               String    @default("VENDEDOR") @map("rol")
   porcentajeComision Float     @default(0) @map("porcentaje_comision")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")

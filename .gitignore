@@ -18,6 +18,13 @@ backend/database.db
 *.sqlite
 *.db
 
+# Backend specific
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/coverage/
+backend/*.log
+generated/prisma
+
 # .antigravity team state
 .antigravity/
 
@@ -63,6 +70,10 @@ IMPLEMENTATION_PLAN_A11Y.md
 # Scripts con credenciales
 scripts/
 backend/scripts/
+.scripts/
+
+# Archivos seed de productos
+backend/zapatillas_batch*.json
 
 # Supabase local config (puede contener credenciales)
 supabase/.temp/
