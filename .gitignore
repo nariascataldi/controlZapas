@@ -86,3 +86,5 @@ backend/supabase/.temp
 runs.json
 run_logs.txt
 backend/.agents
+.vercel
+.env*.local

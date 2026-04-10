@@ -388,13 +388,14 @@
     {
       "id": 33,
       "title": "Configurar environment variables seguras en Vercel Dashboard",
-      "status": "PENDING",
+      "status": "COMPLETED",
       "priority": "HIGH",
       "assigned_to": "Executor",
       "dependencies": [],
       "plan_approved": false,
       "created_at": "2026-04-10T17:54:11.302002",
-      "created_by": "NestorBot"
+      "created_by": "NestorBot",
+      "updated_at": "2026-04-10T18:46:25.682296"
     },
     {
       "id": 34,
@@ -410,24 +411,26 @@
     {
       "id": 35,
       "title": "Deploy seguro con fixes de seguridad y error handling",
-      "status": "PENDING",
+      "status": "COMPLETED",
       "priority": "HIGH",
       "assigned_to": "Backend",
       "dependencies": [],
       "plan_approved": false,
       "created_at": "2026-04-10T17:54:11.401506",
-      "created_by": "NestorBot"
+      "created_by": "NestorBot",
+      "updated_at": "2026-04-10T18:46:25.713347"
     },
     {
       "id": 36,
       "title": "Test e2e de login en producci\u00f3n despu\u00e9s de deploy",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": "HIGH",
       "assigned_to": "QA",
       "dependencies": [],
       "plan_approved": false,
       "created_at": "2026-04-10T17:54:11.450472",
-      "created_by": "NestorBot"
+      "created_by": "NestorBot",
+      "updated_at": "2026-04-10T18:46:25.741104"
     }
   ],
   "members": [
