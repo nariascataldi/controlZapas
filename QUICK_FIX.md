@@ -18,6 +18,7 @@ Login endpoint returns 500 error with message: "A server error has occurred"
    | Variable | Value |
    |----------|-------|
    | `DATABASE_URL` | `postgresql://postgres.uytlmgqqvdvcvwvchvcw:sbp_989951ec23323d5e45cfe943254559bf6f30cf0d@aws-1-us-east-2.pooler.supabase.com:6543/postgres?pgbouncer=true` |
+   
    | `DIRECT_URL` | `postgresql://postgres.uytlmgqqvdvcvwvchvcw:sbp_989951ec23323d5e45cfe943254559bf6f30cf0d@db.uytlmgqqvdvcvwvchvcw.supabase.co:5432/postgres` |
    | `JWT_SECRET` | `your_secret_here` (use a strong random string) |
    | `NODE_ENV` | `production` |

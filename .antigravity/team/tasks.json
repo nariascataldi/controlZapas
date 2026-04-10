@@ -373,6 +373,61 @@
       "created_at": "2026-04-09T22:57:00Z",
       "created_by": "NestorBot",
       "updated_at": "2026-04-09T22:58:50Z"
+    },
+    {
+      "id": 32,
+      "title": "Eliminar credenciales expuestas de Git y rotarlas",
+      "status": "PENDING",
+      "priority": "CRITICAL",
+      "assigned_to": "Security",
+      "dependencies": [],
+      "plan_approved": false,
+      "created_at": "2026-04-10T17:54:11.256490",
+      "created_by": "NestorBot"
+    },
+    {
+      "id": 33,
+      "title": "Configurar environment variables seguras en Vercel Dashboard",
+      "status": "PENDING",
+      "priority": "HIGH",
+      "assigned_to": "Executor",
+      "dependencies": [],
+      "plan_approved": false,
+      "created_at": "2026-04-10T17:54:11.302002",
+      "created_by": "NestorBot"
+    },
+    {
+      "id": 34,
+      "title": "Mejorar manejo de errores en api.js para respuestas no-JSON",
+      "status": "PENDING",
+      "priority": "MEDIUM",
+      "assigned_to": "Frontend",
+      "dependencies": [],
+      "plan_approved": false,
+      "created_at": "2026-04-10T17:54:11.352281",
+      "created_by": "NestorBot"
+    },
+    {
+      "id": 35,
+      "title": "Deploy seguro con fixes de seguridad y error handling",
+      "status": "PENDING",
+      "priority": "HIGH",
+      "assigned_to": "Backend",
+      "dependencies": [],
+      "plan_approved": false,
+      "created_at": "2026-04-10T17:54:11.401506",
+      "created_by": "NestorBot"
+    },
+    {
+      "id": 36,
+      "title": "Test e2e de login en producci\u00f3n despu\u00e9s de deploy",
+      "status": "PENDING",
+      "priority": "HIGH",
+      "assigned_to": "QA",
+      "dependencies": [],
+      "plan_approved": false,
+      "created_at": "2026-04-10T17:54:11.450472",
+      "created_by": "NestorBot"
     }
   ],
   "members": [

@@ -71,9 +71,11 @@ IMPLEMENTATION_PLAN_A11Y.md
 scripts/
 backend/scripts/
 .scripts/
+.qwen
 
 # Archivos seed de productos
 backend/zapatillas_batch*.json
+QUICK_FIX.md
 
 # Supabase local config (puede contener credenciales)
 supabase/.temp/

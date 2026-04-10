@@ -55,6 +55,12 @@ if (window.location.pathname.endsWith('login.html')) {
             const u = document.getElementById('inputUser').value;
             const p = document.getElementById('inputPassword').value;
             const alertBox = document.getElementById('loginAlert');
+            const submitBtn = form.querySelector('button[type="submit"]');
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Ingresando...';
+            alertBox.classList.add('d-none');
 
             try {
                 const data = await fetchAPI('/auth/login', {
@@ -65,11 +71,28 @@ if (window.location.pathname.endsWith('login.html')) {
                 if (data && data.token) {
                     localStorage.setItem('cz_token', data.token);
                     localStorage.setItem('cz_user', JSON.stringify(data.usuario));
-                    window.location.href = 'index.html';
+                    alertBox.innerHTML = '<i class="bi bi-check-circle me-2"></i>¡Login exitoso! Redirigiendo...';
+                    alertBox.className = 'alert alert-success py-2 small border-0';
+                    alertBox.classList.remove('d-none');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 500);
                 }
             } catch (error) {
-                alertBox.textContent = error.message;
+                // Display user-friendly error message
+                alertBox.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>${error.message}`;
+                alertBox.className = 'alert alert-danger py-2 small border-0';
                 alertBox.classList.remove('d-none');
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    alertBox.classList.add('d-none');
+                }, 5000);
+            } finally {
+                // Restore button state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Ingresar al Sistema <i class="bi bi-arrow-right-short ms-1 fs-5 align-middle" aria-hidden="true"></i>';
             }
         });
     }
