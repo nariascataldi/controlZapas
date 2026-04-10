@@ -170,6 +170,41 @@ router.get('/:id', verificarToken, async (req, res) => {
     }
 });
 
+router.put('/:id', verificarToken, soloAdmin, async (req, res) => {
+    const productId = parseInt(req.params.id);
+    const { nombre, marca, precio_mayorista, precio_minorista, categoria } = req.body;
+
+    try {
+        const producto = await prisma.producto.update({
+            where: { id: productId },
+            data: {
+                nombre,
+                marca,
+                precioMayorista: precio_mayorista,
+                precioMinorista: precio_minorista,
+                categoria
+            }
+        });
+        res.json({ mensaje: 'Producto actualizado', producto });
+    } catch (err) {
+        return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+});
+
+router.delete('/:id', verificarToken, soloAdmin, async (req, res) => {
+    const productId = parseInt(req.params.id);
+
+    try {
+        await prisma.$transaction(async (tx) => {
+            await tx.variante.deleteMany({ where: { productoId: productId } });
+            await tx.producto.delete({ where: { id: productId } });
+        });
+        res.json({ mensaje: 'Producto eliminado correctamente' });
+    } catch (err) {
+        return res.status(500).json({ error: 'Error al eliminar producto' });
+    }
+});
+
 router.get('/:id/imagenes', verificarToken, async (req, res) => {
     const productId = parseInt(req.params.id);
     try {
