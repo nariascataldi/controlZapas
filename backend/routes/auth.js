@@ -7,7 +7,16 @@ const prisma = require('../prisma');
 router.post('/login', async (req, res) => {
     const { nombre, password } = req.body;
     console.log('[Auth] Login attempt for:', nombre);
-    
+
+    // Check if prisma is properly initialized
+    if (!prisma || !prisma.usuario) {
+        console.error('[Auth] ERROR: Prisma client not properly initialized');
+        return res.status(503).json({ 
+            error: 'Base de datos no configurada',
+            hint: 'Please configure DATABASE_URL in Vercel environment variables'
+        });
+    }
+
     // Diagnostic checks
     console.log('[Auth] JWT_SECRET defined:', !!process.env.JWT_SECRET);
     console.log('[Auth] DATABASE_URL defined:', !!process.env.DATABASE_URL);

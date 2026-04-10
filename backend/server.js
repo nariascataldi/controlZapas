@@ -8,6 +8,43 @@ const bcrypt = require('bcrypt');
 
 dotenv.config();
 
+// Validate critical environment variables before starting
+const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+  console.error('═══════════════════════════════════════════════════');
+  console.error('❌ MISSING ENVIRONMENT VARIABLES');
+  console.error('═══════════════════════════════════════════════════');
+  console.error('The following environment variables are required:');
+  missingEnvVars.forEach(varName => {
+    console.error(`  • ${varName}`);
+  });
+  console.error('');
+  console.error('Please configure them in:');
+  console.error('  • Vercel Dashboard → Settings → Environment Variables');
+  console.error('  • Or in your local .env file');
+  console.error('═══════════════════════════════════════════════════');
+  
+  // In production/Vercel, don't crash - export app with error handler
+  if (process.env.VERCEL === '1') {
+    const express = require('express');
+    const app = express();
+    app.use((req, res) => {
+      res.status(503).json({
+        error: 'Service unavailable: Missing environment configuration',
+        missing: missingEnvVars,
+        help: 'Please contact support or check Vercel environment variables'
+      });
+    });
+    module.exports = app;
+    return;
+  }
+  
+  // In local development, crash with helpful error
+  process.exit(1);
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isVercel = process.env.VERCEL === '1';
@@ -93,19 +130,38 @@ const prisma = require('./database');
 
 app.get('/api/health', async (req, res) => {
     try {
+        // Check if we have a valid prisma client
+        if (!prisma || !prisma.$queryRaw) {
+            return res.status(503).json({
+                status: 'ERROR',
+                message: 'Database client not initialized',
+                database: 'Not connected',
+                env: process.env.NODE_ENV || 'not set',
+                hasDatabaseUrl: !!process.env.DATABASE_URL,
+                hasJwtSecret: !!process.env.JWT_SECRET,
+                hint: 'Please configure environment variables in Vercel dashboard'
+            });
+        }
+
         await prisma.$queryRaw`SELECT 1`;
-        res.json({ 
-            status: 'OK', 
-            message: 'controlZapas API is running', 
+        res.json({
+            status: 'OK',
+            message: 'controlZapas API is running',
             database: 'Connected (PostgreSQL)',
-            env: process.env.NODE_ENV
+            env: process.env.NODE_ENV,
+            hasDatabaseUrl: !!process.env.DATABASE_URL,
+            hasJwtSecret: !!process.env.JWT_SECRET
         });
     } catch (err) {
         console.error('[Health] Database connection failed:', err.message);
-        res.status(503).json({ 
-            status: 'ERROR', 
-            message: 'Database connection failed', 
-            error: err.message 
+        res.status(503).json({
+            status: 'ERROR',
+            message: 'Database connection failed',
+            error: err.message,
+            env: process.env.NODE_ENV || 'not set',
+            hasDatabaseUrl: !!process.env.DATABASE_URL,
+            hasJwtSecret: !!process.env.JWT_SECRET,
+            hint: 'Verify DATABASE_URL in Vercel environment variables'
         });
     }
 });

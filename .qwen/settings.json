@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(control-zapas.vercel.app)",
+      "Bash(npx *)",
+      "Bash(curl *)",
+      "Bash(npm *)",
+      "Bash(chmod *)"
+    ]
+  },
+  "$version": 3
+}
