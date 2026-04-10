@@ -1,12 +1,12 @@
 -- CreateEnum
-CREATE TYPE "Rol" AS ENUM ('ADMIN', 'VENDEDOR');
+CREATE TYPE "rol" AS ENUM ('ADMIN', 'VENDEDOR');
 
 -- CreateTable
 CREATE TABLE "usuarios" (
     "id" SERIAL NOT NULL,
     "nombre" TEXT NOT NULL,
     "password_hash" TEXT NOT NULL,
-    "rol" "Rol" NOT NULL DEFAULT 'VENDEDOR',
+    "rol" "rol" NOT NULL DEFAULT 'VENDEDOR',
     "porcentaje_comision" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
