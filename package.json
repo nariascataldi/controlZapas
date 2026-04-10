@@ -4,7 +4,7 @@
   "description": "Control de ventas de zpas",
   "scripts": {
     "start": "node api/index.js",
-    "build": "npx prisma generate --schema=backend/prisma/schema.prisma"
+    "build": "cd backend && ./node_modules/.bin/prisma generate --schema=prisma/schema.prisma"
   },
   "dependencies": {
     "@libsql/client": "^0.17.2",
