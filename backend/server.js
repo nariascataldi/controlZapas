@@ -8,43 +8,6 @@ const bcrypt = require('bcrypt');
 
 dotenv.config();
 
-// Validate critical environment variables before starting
-const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];
-const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
-
-if (missingEnvVars.length > 0) {
-  console.error('═══════════════════════════════════════════════════');
-  console.error('❌ MISSING ENVIRONMENT VARIABLES');
-  console.error('═══════════════════════════════════════════════════');
-  console.error('The following environment variables are required:');
-  missingEnvVars.forEach(varName => {
-    console.error(`  • ${varName}`);
-  });
-  console.error('');
-  console.error('Please configure them in:');
-  console.error('  • Vercel Dashboard → Settings → Environment Variables');
-  console.error('  • Or in your local .env file');
-  console.error('═══════════════════════════════════════════════════');
-  
-  // In production/Vercel, don't crash - export app with error handler
-  if (process.env.VERCEL === '1') {
-    const express = require('express');
-    const app = express();
-    app.use((req, res) => {
-      res.status(503).json({
-        error: 'Service unavailable: Missing environment configuration',
-        missing: missingEnvVars,
-        help: 'Please contact support or check Vercel environment variables'
-      });
-    });
-    module.exports = app;
-    return;
-  }
-  
-  // In local development, crash with helpful error
-  process.exit(1);
-}
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isVercel = process.env.VERCEL === '1';
