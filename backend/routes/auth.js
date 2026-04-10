@@ -6,35 +6,49 @@ const prisma = require('../prisma');
 
 router.post('/login', async (req, res) => {
     const { nombre, password } = req.body;
-    console.log('Login attempt:', nombre);
+    console.log('[Auth] Login attempt for:', nombre);
+    
+    // Diagnostic checks
+    console.log('[Auth] JWT_SECRET defined:', !!process.env.JWT_SECRET);
+    console.log('[Auth] DATABASE_URL defined:', !!process.env.DATABASE_URL);
+    console.log('[Auth] Prisma object exists:', !!prisma);
+    if (prisma) console.log('[Auth] Prisma users model exists:', !!prisma.usuario);
 
     if (!nombre || !password) {
         return res.status(400).json({ error: 'Nombre de usuario y contraseña son requeridos' });
     }
 
     try {
-        console.log('Finding user...');
+        console.log('[Auth] Executing prisma.usuario.findUnique...');
         const user = await prisma.usuario.findUnique({
             where: { nombre }
         });
-        console.log('User found:', !!user);
+        console.log('[Auth] DB lookup result:', !!user);
 
         if (!user) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
+        console.log('[Auth] Comparing passwords...');
         const validPassword = bcrypt.compareSync(password, user.passwordHash);
         if (!validPassword) {
+            console.log('[Auth] Invalid password');
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
+        if (!process.env.JWT_SECRET) {
+            console.error('[Auth] ERROR: JWT_SECRET is not defined in environment variables');
+            return res.status(500).json({ error: 'Error de configuración en el servidor' });
+        }
+
+        console.log('[Auth] Signing token...');
         const token = jwt.sign(
             { id: user.id, nombre: user.nombre, rol: user.rol, porcentajeComision: user.porcentajeComision },
             process.env.JWT_SECRET,
             { expiresIn: '12h' }
         );
 
-        console.log('Login successful:', user.nombre);
+        console.log('[Auth] Login success:', user.nombre);
         res.json({
             token,
             usuario: {
@@ -45,8 +59,12 @@ router.post('/login', async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('Login error:', err);
-        return res.status(500).json({ error: 'Error en la base de datos' });
+        console.error('[Auth] CRITICAL ERROR during login process:');
+        console.error(err.stack);
+        return res.status(500).json({ 
+            error: 'Error interno del servidor', 
+            details: process.env.NODE_ENV === 'development' ? err.message : undefined 
+        });
     }
 });
 
