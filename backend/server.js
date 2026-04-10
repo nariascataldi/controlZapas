@@ -91,8 +91,23 @@ if (isVercel) {
 
 const prisma = require('./database');
 
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', message: 'controlZapas API is running', database: 'PostgreSQL' });
+app.get('/api/health', async (req, res) => {
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        res.json({ 
+            status: 'OK', 
+            message: 'controlZapas API is running', 
+            database: 'Connected (PostgreSQL)',
+            env: process.env.NODE_ENV
+        });
+    } catch (err) {
+        console.error('[Health] Database connection failed:', err.message);
+        res.status(503).json({ 
+            status: 'ERROR', 
+            message: 'Database connection failed', 
+            error: err.message 
+        });
+    }
 });
 
 async function crearAdminPorDefecto() {
