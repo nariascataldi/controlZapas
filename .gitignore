@@ -88,3 +88,4 @@ run_logs.txt
 backend/.agents
 .vercel
 .env*.local
+.github/
